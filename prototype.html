@@ -17,11 +17,9 @@
       --bell: #8F4B2A;
       --bell-dim: #C4A28E;
       --good: #3F5A45;
-      --space: 8px;
       --sans: "IBM Plex Sans", "Helvetica Neue", sans-serif;
       --serif: "Newsreader", "Iowan Old Style", "Palatino", serif;
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
     body {
@@ -36,7 +34,6 @@
       gap: 48px;
       padding: 40px 24px 80px;
     }
-
     .stage { display: flex; flex-direction: column; gap: 16px; align-items: center; }
     .label {
       font-size: 12px;
@@ -45,20 +42,16 @@
       color: #A39B8E;
       font-weight: 500;
     }
-
     .phone {
       width: 390px;
       height: 844px;
       background: var(--paper);
       border-radius: 36px;
       border: 1px solid #1a1816;
-      box-shadow: 0 16px 28px rgba(0,0,0,0.28);
       overflow: hidden;
-      position: relative;
       display: flex;
       flex-direction: column;
     }
-
     .notch {
       height: 54px;
       display: flex;
@@ -67,12 +60,9 @@
       padding: 0 28px 10px;
       font-size: 14px;
       font-weight: 500;
-      color: var(--ink);
     }
-
-    .screen { flex: 1; padding: 8px 24px 0; overflow: hidden; display: none; flex-direction: column; }
+    .screen { flex: 1; padding: 8px 24px 0; overflow: auto; display: none; flex-direction: column; }
     .screen.on { display: flex; }
-
     .metalabel {
       font-size: 11px;
       letter-spacing: 0.14em;
@@ -80,209 +70,70 @@
       color: var(--quiet);
       font-weight: 500;
     }
-
     .keeper {
-      width: 72px;
-      height: 72px;
-      border-radius: 50%;
-      border: 1px solid var(--ink);
-      margin: 28px auto 8px;
-      position: relative;
+      width: 72px; height: 72px; border-radius: 50%;
+      border: 1px solid var(--ink); margin: 28px auto 8px; position: relative;
     }
     .keeper::after {
-      content: "";
-      position: absolute;
-      inset: 14px;
-      border-radius: 50%;
-      background: var(--bell);
-      opacity: var(--fid, 0.85);
+      content: ""; position: absolute; inset: 14px; border-radius: 50%;
+      background: var(--bell); opacity: var(--fid, 0.85);
     }
     .keeper.dim { --fid: 0.32; border-color: var(--quiet); }
     .keeper.held { --fid: 1; }
-
     .rite {
-      font-family: var(--serif);
-      font-size: 40px;
-      line-height: 1.05;
-      font-weight: 400;
-      letter-spacing: -0.02em;
-      text-align: center;
-      margin-top: 20px;
+      font-family: var(--serif); font-size: 40px; line-height: 1.05;
+      font-weight: 400; letter-spacing: -0.02em; text-align: center; margin-top: 20px;
     }
-
-    .lede {
-      text-align: center;
-      color: var(--quiet);
-      margin-top: 12px;
-      font-size: 16px;
-    }
-
-    .rule {
-      height: 1px;
-      background: var(--hairline);
-      margin: 28px 0 20px;
-    }
-
-    .meta-row {
-      display: flex;
-      justify-content: space-between;
-      color: var(--quiet);
-      font-size: 14px;
-    }
-
-    .first-act {
-      margin-top: 20px;
-      font-family: var(--serif);
-      font-size: 20px;
-      line-height: 1.35;
-    }
-
-    .actions {
-      margin-top: auto;
-      padding-bottom: 28px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
+    .lede { text-align: center; color: var(--quiet); margin-top: 12px; font-size: 16px; }
+    .rule { height: 1px; background: var(--hairline); margin: 28px 0 20px; }
+    .meta-row { display: flex; justify-content: space-between; color: var(--quiet); font-size: 14px; }
+    .first-act { margin-top: 20px; font-family: var(--serif); font-size: 20px; line-height: 1.35; }
+    .actions { margin-top: auto; padding-bottom: 28px; display: flex; flex-direction: column; gap: 8px; }
     button {
-      font-family: var(--sans);
-      font-size: 16px;
-      border: 1px solid var(--ink);
-      background: var(--ink);
-      color: var(--paper);
-      border-radius: 4px;
-      padding: 14px 16px;
-      cursor: pointer;
+      font-family: var(--sans); font-size: 16px; border: 1px solid var(--ink);
+      background: var(--ink); color: var(--paper); border-radius: 4px; padding: 14px 16px; cursor: pointer;
     }
-    button.ghost {
-      background: transparent;
-      color: var(--ink);
-    }
-    button.quiet {
-      background: transparent;
-      border-color: transparent;
-      color: var(--quiet);
-      padding: 8px;
-    }
+    button.ghost { background: transparent; color: var(--ink); }
+    button.quiet { background: transparent; border-color: transparent; color: var(--quiet); padding: 8px; }
     button:active { transform: translateY(1px); }
-
     .tabbar {
-      height: 64px;
-      border-top: 1px solid var(--hairline);
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      padding-bottom: 10px;
-      background: var(--paper);
+      height: 64px; border-top: 1px solid var(--hairline);
+      display: flex; align-items: center; justify-content: space-around;
+      padding-bottom: 10px; background: var(--paper);
     }
     .tab {
-      background: none;
-      border: 0;
-      color: var(--quiet);
-      font-size: 12px;
-      font-weight: 500;
-      letter-spacing: 0.04em;
-      padding: 8px 12px;
+      background: none; border: 0; color: var(--quiet); font-size: 12px;
+      font-weight: 500; letter-spacing: 0.04em; padding: 8px 12px;
     }
     .tab.now { color: var(--ink); }
-
     .row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      padding: 16px 0;
-      border-bottom: 1px solid var(--hairline);
-      gap: 16px;
+      display: flex; justify-content: space-between; align-items: baseline;
+      padding: 16px 0; border-bottom: 1px solid var(--hairline); gap: 16px;
     }
-    .row .when {
-      font-variant-numeric: tabular-nums;
-      color: var(--quiet);
-      font-size: 14px;
-      min-width: 52px;
-    }
-    .row .name {
-      font-family: var(--serif);
-      font-size: 20px;
-      flex: 1;
-    }
-    .row .kind {
-      font-size: 12px;
-      color: var(--quiet);
-    }
-
-    h2.page {
-      font-family: var(--serif);
-      font-size: 28px;
-      font-weight: 400;
-      margin: 12px 0 8px;
-    }
-
-    .ask {
-      font-family: var(--serif);
-      font-size: 28px;
-      line-height: 1.2;
-      margin: 24px 0 8px;
-    }
-
+    .row .when { font-variant-numeric: tabular-nums; color: var(--quiet); font-size: 14px; min-width: 52px; }
+    .row .name { font-family: var(--serif); font-size: 20px; flex: 1; }
+    .row .kind { font-size: 12px; color: var(--quiet); }
+    h2.page { font-family: var(--serif); font-size: 28px; font-weight: 400; margin: 12px 0 8px; }
+    .ask { font-family: var(--serif); font-size: 28px; line-height: 1.2; margin: 24px 0 8px; }
     .seed-quote {
-      background: var(--paper-2);
-      padding: 16px;
-      border-radius: 2px;
-      color: var(--quiet);
-      font-size: 14px;
-      margin-top: 16px;
+      background: var(--paper-2); padding: 16px; border-radius: 2px;
+      color: var(--quiet); font-size: 14px; margin-top: 16px;
     }
-
     textarea {
-      width: 100%;
-      min-height: 88px;
-      border: 1px solid var(--hairline);
-      background: var(--paper);
-      border-radius: 4px;
-      padding: 12px;
-      font-family: var(--serif);
-      font-size: 18px;
-      color: var(--ink);
-      resize: none;
-      outline: none;
+      width: 100%; min-height: 88px; border: 1px solid var(--hairline);
+      background: var(--paper); border-radius: 4px; padding: 12px;
+      font-family: var(--serif); font-size: 18px; color: var(--ink); resize: none; outline: none;
     }
     textarea:focus { border-color: var(--ink); }
-
     .choices { display: flex; flex-direction: column; gap: 8px; margin-top: 24px; }
-
     .close-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 14px 0;
-      border-bottom: 1px solid var(--hairline);
-      font-size: 16px;
+      display: flex; justify-content: space-between; padding: 14px 0;
+      border-bottom: 1px solid var(--hairline); font-size: 16px;
     }
     .close-item span { color: var(--quiet); font-size: 14px; }
     .kept { color: var(--good); }
-
-    .note {
-      max-width: 320px;
-      color: #C9C1B4;
-      font-size: 13px;
-      line-height: 1.5;
-    }
-    .note strong { color: #E8E1D4; font-weight: 500; }
-
-    .side {
-      width: 280px;
-      padding-top: 54px;
-      color: #C9C1B4;
-      font-size: 14px;
-      line-height: 1.55;
-    }
-    .side h1 {
-      font-family: var(--serif);
-      color: var(--paper);
-      font-size: 32px;
-      font-weight: 400;
-      margin-bottom: 12px;
-    }
+    .side { width: 280px; padding-top: 54px; color: #C9C1B4; font-size: 14px; line-height: 1.55; }
+    .side h1 { font-family: var(--serif); color: var(--paper); font-size: 32px; font-weight: 400; margin-bottom: 12px; }
     .side ol { padding-left: 18px; margin: 16px 0; }
     .side li { margin: 6px 0; }
   </style>
@@ -290,88 +141,36 @@
 <body>
   <div class="side">
     <h1>Rewired Therapy</h1>
-    <p>Click the phone. Form over mood. Schedule grown from a single question.</p>
-    <ol>
-      <li>Hour — the rite, not a dashboard</li>
-      <li>Ribbon — today only</li>
-      <li>Seed — once, or it returns</li>
-      <li>Close — fidelity, not a score</li>
-    </ol>
-    <p class="note" style="margin-top:24px">Paper, ink, one bell-bronze. No purple, no mascot, no streak death.</p>
+    <p>Plant a seed. Answer once or it returns. Refresh the page — the ribbon should still be there.</p>
   </div>
 
   <div class="stage">
-    <div class="label">Prototype · 390×844</div>
+    <div class="label">Prototype · remembers in this browser</div>
     <div class="phone" id="phone">
       <div class="notch"><span>9:41</span><span>●●●</span></div>
 
       <section class="screen on" id="hour">
-        <div class="metalabel">Wednesday · appointed</div>
+        <div class="metalabel" id="hour-label">Appointed</div>
         <div class="keeper held" aria-hidden="true"></div>
-        <div class="rite">Rent-form</div>
-        <p class="lede">You do not need to feel ready.</p>
+        <div class="rite" id="hour-rite">Nothing planted</div>
+        <p class="lede" id="hour-lede">Capture a seed. The hour will appear here.</p>
         <div class="rule"></div>
         <div class="meta-row">
-          <span>Eight minutes</span>
-          <span>Due in 4 days</span>
+          <span id="hour-duration">—</span>
+          <span id="hour-when">—</span>
         </div>
-        <p class="first-act">Open the portal. Read the amount. Pay, or set the date.</p>
+        <p class="first-act" id="hour-act">The ribbon is empty until you plant a form.</p>
         <div class="actions">
-          <button type="button" onclick="show('timer')">Keep the form</button>
-          <button type="button" class="ghost" onclick="show('smaller')">Smaller form</button>
-          <button type="button" class="quiet" onclick="show('ribbon')">Park until next</button>
-        </div>
-      </section>
-
-      <section class="screen" id="timer">
-        <div class="metalabel">In form</div>
-        <div class="keeper" aria-hidden="true"></div>
-        <div class="rite" style="font-size:64px; font-variant-numeric:tabular-nums;">7:42</div>
-        <p class="lede">Portal open. Amount next.</p>
-        <div class="rule"></div>
-        <p class="first-act">When the portal is closed, the form is kept — even if you only scheduled the date.</p>
-        <div class="actions">
-          <button type="button" onclick="show('close')">Form kept</button>
-          <button type="button" class="ghost" onclick="show('hour')">Leave the hour</button>
-        </div>
-      </section>
-
-      <section class="screen" id="smaller">
-        <div class="metalabel">Valid smaller form</div>
-        <div class="keeper dim" aria-hidden="true"></div>
-        <div class="rite">Open only</div>
-        <p class="lede">Three minutes. Look at the number. Stop.</p>
-        <div class="rule"></div>
-        <p class="first-act">Seeing the amount is the rite. Paying can wait for the next appointed hour.</p>
-        <div class="actions">
-          <button type="button" onclick="show('timer')">Begin</button>
-          <button type="button" class="ghost" onclick="show('hour')">Return</button>
+          <button type="button" id="btn-keep" onclick="keepForm()">Keep the form</button>
+          <button type="button" class="ghost" onclick="show('seed')">Capture a seed</button>
+          <button type="button" class="quiet" onclick="show('ribbon')">See the ribbon</button>
         </div>
       </section>
 
       <section class="screen" id="ribbon">
         <h2 class="page">Today’s ribbon</h2>
-        <div class="row">
-          <span class="when">Now</span>
-          <span class="name">Rent-form</span>
-          <span class="kind">monthly</span>
-        </div>
-        <div class="row">
-          <span class="when">14:00</span>
-          <span class="name">CHEM show-up</span>
-          <span class="kind">term</span>
-        </div>
-        <div class="row">
-          <span class="when">19:10</span>
-          <span class="name">Sink-form</span>
-          <span class="kind">daily</span>
-        </div>
-        <div class="row">
-          <span class="when">21:30</span>
-          <span class="name">Shutdown</span>
-          <span class="kind">daily</span>
-        </div>
-        <p class="lede" style="text-align:left; margin-top:24px;">Four appointed hours. Nothing else belongs on Wednesday.</p>
+        <div id="ribbon-list"></div>
+        <p class="lede" id="ribbon-note" style="text-align:left; margin-top:24px;"></p>
         <div class="actions">
           <button type="button" class="ghost" onclick="show('seed')">Capture a seed</button>
         </div>
@@ -379,52 +178,39 @@
 
       <section class="screen" id="seed">
         <h2 class="page">What needs an hour?</h2>
-        <textarea placeholder="car insurance, quiz Friday, the sink…">car insurance</textarea>
+        <textarea id="seed-text" placeholder="car insurance, quiz Friday, the sink…"></textarea>
         <p class="seed-quote">The keeper will not plan your life. It will ask whether this returns.</p>
         <div class="actions">
-          <button type="button" onclick="show('ask')">Hold this</button>
+          <button type="button" onclick="holdSeed()">Hold this</button>
           <button type="button" class="quiet" onclick="show('ribbon')">Cancel</button>
         </div>
       </section>
 
       <section class="screen" id="ask">
-        <div class="metalabel">Classify</div>
-        <p class="seed-quote">“car insurance”</p>
+        <p class="seed-quote" id="ask-quote"></p>
         <p class="ask">Once, or does it return?</p>
         <div class="choices">
           <button type="button" class="ghost" onclick="show('ask2')">It returns</button>
-          <button type="button" class="ghost" onclick="show('planted-once')">Once</button>
+          <button type="button" class="ghost" onclick="plant('once')">Once</button>
           <button type="button" class="quiet" onclick="show('ribbon')">Decide later</button>
         </div>
       </section>
 
       <section class="screen" id="ask2">
-        <div class="metalabel">Classify</div>
         <p class="ask">How does it return?</p>
         <div class="choices">
-          <button type="button" class="ghost" onclick="show('planted')">Same date each month</button>
-          <button type="button" class="ghost" onclick="show('planted')">Same weekday</button>
-          <button type="button" class="ghost" onclick="show('planted')">After the last time</button>
+          <button type="button" class="ghost" onclick="plant('monthly')">Same date each month</button>
+          <button type="button" class="ghost" onclick="plant('weekly')">Same weekday</button>
+          <button type="button" class="ghost" onclick="plant('after-last')">After the last time</button>
         </div>
       </section>
 
       <section class="screen" id="planted">
-        <div class="metalabel">Appointed</div>
         <div class="keeper held" aria-hidden="true"></div>
-        <div class="rite">Insurance pay-form</div>
-        <p class="lede">Every six months, announced ten days early. Next guess: 4 March.</p>
+        <div class="rite" id="planted-rite"></div>
+        <p class="lede" id="planted-lede"></p>
         <div class="rule"></div>
-        <p class="first-act">Open the policy. Pay or write the date. Eight minutes.</p>
-        <div class="actions">
-          <button type="button" onclick="show('ribbon')">Place on the ribbon</button>
-          <button type="button" class="ghost">Wrong — edit</button>
-        </div>
-      </section>
-
-      <section class="screen" id="planted-once">
-        <div class="metalabel">Appointed</div>
-        <div class="rite" style="margin-top:48px;">One hour</div>
-        <p class="lede">It will not come back unless you plant it again.</p>
+        <p class="first-act">Open the thing. Do the first action. Stop when the minutes end.</p>
         <div class="actions">
           <button type="button" onclick="show('ribbon')">Place on the ribbon</button>
         </div>
@@ -432,10 +218,8 @@
 
       <section class="screen" id="close">
         <h2 class="page">What was kept</h2>
-        <div class="close-item">Rent-form <span class="kept">kept</span></div>
-        <div class="close-item">CHEM show-up <span>still ahead</span></div>
-        <div class="close-item">Sink-form <span>not yet</span></div>
-        <p class="lede" style="text-align:left; margin-top:28px;">A missed hour does not carry into Thursday. Tomorrow the lamp is lit again.</p>
+        <div id="close-list"></div>
+        <p class="lede" style="text-align:left; margin-top:28px;">A missed hour does not carry into tomorrow. The next appointed time is clean.</p>
         <div class="actions">
           <button type="button" onclick="show('hour')">Good night</button>
         </div>
@@ -451,14 +235,144 @@
   </div>
 
   <script>
+    const KEY = "rewired-therapy-forms-v1";
+    const STARTER = [
+      { name: "Sink-form", kind: "daily", when: "19:10", duration: "Ten minutes", action: "Clear the basin only.", kept: false }
+    ];
+
+    let draft = "";
+    let forms = load();
+
+    function load() {
+      try {
+        const raw = localStorage.getItem(KEY);
+        if (!raw) return STARTER.slice();
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : STARTER.slice();
+      } catch (e) {
+        return STARTER.slice();
+      }
+    }
+
+    function save() {
+      localStorage.setItem(KEY, JSON.stringify(forms));
+    }
+
+    function formTitle(text, kind) {
+      const clean = text.trim().replace(/\s+/g, " ");
+      if (kind === "once") return clean;
+      if (/form$/i.test(clean)) return clean;
+      return clean + "-form";
+    }
+
     function show(id) {
       document.querySelectorAll(".screen").forEach((s) => s.classList.remove("on"));
       document.getElementById(id).classList.add("on");
-      const map = { hour: "Hour", timer: "Hour", smaller: "Hour", ribbon: "Ribbon", seed: "Seed", ask: "Seed", ask2: "Seed", planted: "Ribbon", "planted-once": "Ribbon", close: "Close" };
+      const map = { hour: "Hour", ribbon: "Ribbon", seed: "Seed", ask: "Seed", ask2: "Seed", planted: "Ribbon", close: "Close" };
       document.querySelectorAll(".tab").forEach((t) => {
         t.classList.toggle("now", t.textContent === map[id]);
       });
+      if (id === "ribbon") drawRibbon();
+      if (id === "hour") drawHour();
+      if (id === "close") drawClose();
     }
+
+    function holdSeed() {
+      draft = document.getElementById("seed-text").value.trim();
+      if (!draft) return;
+      document.getElementById("ask-quote").textContent = "“" + draft + "”";
+      show("ask");
+    }
+
+    function plant(kind) {
+      const name = formTitle(draft || "untitled", kind);
+      const next = {
+        name,
+        kind,
+        when: kind === "once" ? "Once" : "Next",
+        duration: "Eight minutes",
+        action: "Open it. Do the first physical action. Stop.",
+        kept: false
+      };
+      forms.push(next);
+      save();
+      document.getElementById("planted-rite").textContent = name;
+      document.getElementById("planted-lede").textContent =
+        kind === "once"
+          ? "It will not come back unless you plant it again."
+          : "It returns as a " + kind + " form. Refresh the browser — it stays.";
+      document.getElementById("seed-text").value = "";
+      draft = "";
+      drawHour();
+      drawRibbon();
+      show("planted");
+    }
+
+    function keepForm() {
+      if (!forms.length) return show("seed");
+      forms[0].kept = true;
+      save();
+      drawClose();
+      show("close");
+    }
+
+    function drawHour() {
+      const f = forms[0];
+      if (!f) {
+        document.getElementById("hour-rite").textContent = "Nothing planted";
+        document.getElementById("hour-lede").textContent = "Capture a seed. The hour will appear here.";
+        document.getElementById("hour-duration").textContent = "—";
+        document.getElementById("hour-when").textContent = "—";
+        document.getElementById("hour-act").textContent = "The ribbon is empty until you plant a form.";
+        return;
+      }
+      document.getElementById("hour-rite").textContent = f.name;
+      document.getElementById("hour-lede").textContent = "You do not need to feel ready.";
+      document.getElementById("hour-duration").textContent = f.duration;
+      document.getElementById("hour-when").textContent = f.when;
+      document.getElementById("hour-act").textContent = f.action;
+    }
+
+    function drawRibbon() {
+      const list = document.getElementById("ribbon-list");
+      list.innerHTML = "";
+      forms.forEach((f) => {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML =
+          '<span class="when"></span><span class="name"></span><span class="kind"></span>';
+        row.querySelector(".when").textContent = f.when;
+        row.querySelector(".name").textContent = f.name;
+        row.querySelector(".kind").textContent = f.kind;
+        list.appendChild(row);
+      });
+      const n = forms.length;
+      document.getElementById("ribbon-note").textContent =
+        n === 0
+          ? "No appointed hours yet."
+          : n === 1
+            ? "One appointed hour."
+            : n + " appointed hours.";
+    }
+
+    function drawClose() {
+      const list = document.getElementById("close-list");
+      list.innerHTML = "";
+      forms.forEach((f) => {
+        const row = document.createElement("div");
+        row.className = "close-item";
+        const mark = document.createElement("span");
+        mark.textContent = f.kept ? "kept" : "not yet";
+        if (f.kept) mark.className = "kept";
+        row.appendChild(document.createTextNode(f.name + " "));
+        row.appendChild(mark);
+        list.appendChild(row);
+      });
+    }
+
+    drawHour();
+    drawRibbon();
+    drawClose();
   </script>
 </body>
 </html>
