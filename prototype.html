@@ -236,12 +236,14 @@
 
   <script>
     const KEY = "rewired-therapy-forms-v1";
+    const CURRENT_KEY = "rewired-therapy-current-v1";
     const STARTER = [
       { name: "Sink-form", kind: "daily", when: "19:10", duration: "Ten minutes", action: "Clear the basin only.", kept: false }
     ];
 
     let draft = "";
     let forms = load();
+    let current = Number(localStorage.getItem(CURRENT_KEY) || 0);
 
     function load() {
       try {
@@ -295,6 +297,8 @@
         kept: false
       };
       forms.push(next);
+      current = forms.length - 1;
+      localStorage.setItem(CURRENT_KEY, String(current));
       save();
       document.getElementById("planted-rite").textContent = name;
       document.getElementById("planted-lede").textContent =
@@ -310,14 +314,28 @@
 
     function keepForm() {
       if (!forms.length) return show("seed");
-      forms[0].kept = true;
+      const f = forms[current] || forms[0];
+      f.kept = true;
       save();
       drawClose();
       show("close");
     }
 
+    function currentForm() {
+      if (!forms.length) return null;
+      if (current < 0 || current >= forms.length) current = 0;
+      return forms[current];
+    }
+
+    function choose(index) {
+      current = index;
+      localStorage.setItem(CURRENT_KEY, String(current));
+      drawHour();
+      show("hour");
+    }
+
     function drawHour() {
-      const f = forms[0];
+      const f = currentForm();
       if (!f) {
         document.getElementById("hour-rite").textContent = "Nothing planted";
         document.getElementById("hour-lede").textContent = "Capture a seed. The hour will appear here.";
@@ -336,7 +354,7 @@
     function drawRibbon() {
       const list = document.getElementById("ribbon-list");
       list.innerHTML = "";
-      forms.forEach((f) => {
+      forms.forEach((f, i) => {
         const row = document.createElement("div");
         row.className = "row";
         row.innerHTML =
@@ -344,6 +362,9 @@
         row.querySelector(".when").textContent = f.when;
         row.querySelector(".name").textContent = f.name;
         row.querySelector(".kind").textContent = f.kind;
+        row.style.cursor = "pointer";
+        row.title = "Make this the hour";
+        row.addEventListener("click", () => choose(i));
         list.appendChild(row);
       });
       const n = forms.length;
