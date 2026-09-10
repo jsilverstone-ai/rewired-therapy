@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rewired Therapy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --paper: #F3EEE4;
+      --paper-2: #E8E1D4;
+      --ink: #1C1915;
+      --quiet: #5C564C;
+      --hairline: #D4CBBA;
+      --bell: #8F4B2A;
+      --bell-dim: #C4A28E;
+      --good: #3F5A45;
+      --space: 8px;
+      --sans: "IBM Plex Sans", "Helvetica Neue", sans-serif;
+      --serif: "Newsreader", "Iowan Old Style", "Palatino", serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      background: #2A2723;
+      color: var(--ink);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.45;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 48px;
+      padding: 40px 24px 80px;
+    }
+
+    .stage { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+    .label {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #A39B8E;
+      font-weight: 500;
+    }
+
+    .phone {
+      width: 390px;
+      height: 844px;
+      background: var(--paper);
+      border-radius: 36px;
+      border: 1px solid #1a1816;
+      box-shadow: 0 16px 28px rgba(0,0,0,0.28);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .notch {
+      height: 54px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 0 28px 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .screen { flex: 1; padding: 8px 24px 0; overflow: hidden; display: none; flex-direction: column; }
+    .screen.on { display: flex; }
+
+    .metalabel {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--quiet);
+      font-weight: 500;
+    }
+
+    .keeper {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 1px solid var(--ink);
+      margin: 28px auto 8px;
+      position: relative;
+    }
+    .keeper::after {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border-radius: 50%;
+      background: var(--bell);
+      opacity: var(--fid, 0.85);
+    }
+    .keeper.dim { --fid: 0.32; border-color: var(--quiet); }
+    .keeper.held { --fid: 1; }
+
+    .rite {
+      font-family: var(--serif);
+      font-size: 40px;
+      line-height: 1.05;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .lede {
+      text-align: center;
+      color: var(--quiet);
+      margin-top: 12px;
+      font-size: 16px;
+    }
+
+    .rule {
+      height: 1px;
+      background: var(--hairline);
+      margin: 28px 0 20px;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      color: var(--quiet);
+      font-size: 14px;
+    }
+
+    .first-act {
+      margin-top: 20px;
+      font-family: var(--serif);
+      font-size: 20px;
+      line-height: 1.35;
+    }
+
+    .actions {
+      margin-top: auto;
+      padding-bottom: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    button {
+      font-family: var(--sans);
+      font-size: 16px;
+      border: 1px solid var(--ink);
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 4px;
+      padding: 14px 16px;
+      cursor: pointer;
+    }
+    button.ghost {
+      background: transparent;
+      color: var(--ink);
+    }
+    button.quiet {
+      background: transparent;
+      border-color: transparent;
+      color: var(--quiet);
+      padding: 8px;
+    }
+    button:active { transform: translateY(1px); }
+
+    .tabbar {
+      height: 64px;
+      border-top: 1px solid var(--hairline);
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding-bottom: 10px;
+      background: var(--paper);
+    }
+    .tab {
+      background: none;
+      border: 0;
+      color: var(--quiet);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      padding: 8px 12px;
+    }
+    .tab.now { color: var(--ink); }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--hairline);
+      gap: 16px;
+    }
+    .row .when {
+      font-variant-numeric: tabular-nums;
+      color: var(--quiet);
+      font-size: 14px;
+      min-width: 52px;
+    }
+    .row .name {
+      font-family: var(--serif);
+      font-size: 20px;
+      flex: 1;
+    }
+    .row .kind {
+      font-size: 12px;
+      color: var(--quiet);
+    }
+
+    h2.page {
+      font-family: var(--serif);
+      font-size: 28px;
+      font-weight: 400;
+      margin: 12px 0 8px;
+    }
+
+    .ask {
+      font-family: var(--serif);
+      font-size: 28px;
+      line-height: 1.2;
+      margin: 24px 0 8px;
+    }
+
+    .seed-quote {
+      background: var(--paper-2);
+      padding: 16px;
+      border-radius: 2px;
+      color: var(--quiet);
+      font-size: 14px;
+      margin-top: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 88px;
+      border: 1px solid var(--hairline);
+      background: var(--paper);
+      border-radius: 4px;
+      padding: 12px;
+      font-family: var(--serif);
+      font-size: 18px;
+      color: var(--ink);
+      resize: none;
+      outline: none;
+    }
+    textarea:focus { border-color: var(--ink); }
+
+    .choices { display: flex; flex-direction: column; gap: 8px; margin-top: 24px; }
+
+    .close-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--hairline);
+      font-size: 16px;
+    }
+    .close-item span { color: var(--quiet); font-size: 14px; }
+    .kept { color: var(--good); }
+
+    .note {
+      max-width: 320px;
+      color: #C9C1B4;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .note strong { color: #E8E1D4; font-weight: 500; }
+
+    .side {
+      width: 280px;
+      padding-top: 54px;
+      color: #C9C1B4;
+      font-size: 14px;
+      line-height: 1.55;
+    }
+    .side h1 {
+      font-family: var(--serif);
+      color: var(--paper);
+      font-size: 32px;
+      font-weight: 400;
+      margin-bottom: 12px;
+    }
+    .side ol { padding-left: 18px; margin: 16px 0; }
+    .side li { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <div class="side">
+    <h1>Rewired Therapy</h1>
+    <p>Click the phone. Form over mood. Schedule grown from a single question.</p>
+    <ol>
+      <li>Hour — the rite, not a dashboard</li>
+      <li>Ribbon — today only</li>
+      <li>Seed — once, or it returns</li>
+      <li>Close — fidelity, not a score</li>
+    </ol>
+    <p class="note" style="margin-top:24px">Paper, ink, one bell-bronze. No purple, no mascot, no streak death.</p>
+  </div>
+
+  <div class="stage">
+    <div class="label">Prototype · 390×844</div>
+    <div class="phone" id="phone">
+      <div class="notch"><span>9:41</span><span>●●●</span></div>
+
+      <section class="screen on" id="hour">
+        <div class="metalabel">Wednesday · appointed</div>
+        <div class="keeper held" aria-hidden="true"></div>
+        <div class="rite">Rent-form</div>
+        <p class="lede">You do not need to feel ready.</p>
+        <div class="rule"></div>
+        <div class="meta-row">
+          <span>Eight minutes</span>
+          <span>Due in 4 days</span>
+        </div>
+        <p class="first-act">Open the portal. Read the amount. Pay, or set the date.</p>
+        <div class="actions">
+          <button type="button" onclick="show('timer')">Keep the form</button>
+          <button type="button" class="ghost" onclick="show('smaller')">Smaller form</button>
+          <button type="button" class="quiet" onclick="show('ribbon')">Park until next</button>
+        </div>
+      </section>
+
+      <section class="screen" id="timer">
+        <div class="metalabel">In form</div>
+        <div class="keeper" aria-hidden="true"></div>
+        <div class="rite" style="font-size:64px; font-variant-numeric:tabular-nums;">7:42</div>
+        <p class="lede">Portal open. Amount next.</p>
+        <div class="rule"></div>
+        <p class="first-act">When the portal is closed, the form is kept — even if you only scheduled the date.</p>
+        <div class="actions">
+          <button type="button" onclick="show('close')">Form kept</button>
+          <button type="button" class="ghost" onclick="show('hour')">Leave the hour</button>
+        </div>
+      </section>
+
+      <section class="screen" id="smaller">
+        <div class="metalabel">Valid smaller form</div>
+        <div class="keeper dim" aria-hidden="true"></div>
+        <div class="rite">Open only</div>
+        <p class="lede">Three minutes. Look at the number. Stop.</p>
+        <div class="rule"></div>
+        <p class="first-act">Seeing the amount is the rite. Paying can wait for the next appointed hour.</p>
+        <div class="actions">
+          <button type="button" onclick="show('timer')">Begin</button>
+          <button type="button" class="ghost" onclick="show('hour')">Return</button>
+        </div>
+      </section>
+
+      <section class="screen" id="ribbon">
+        <h2 class="page">Today’s ribbon</h2>
+        <div class="row">
+          <span class="when">Now</span>
+          <span class="name">Rent-form</span>
+          <span class="kind">monthly</span>
+        </div>
+        <div class="row">
+          <span class="when">14:00</span>
+          <span class="name">CHEM show-up</span>
+          <span class="kind">term</span>
+        </div>
+        <div class="row">
+          <span class="when">19:10</span>
+          <span class="name">Sink-form</span>
+          <span class="kind">daily</span>
+        </div>
+        <div class="row">
+          <span class="when">21:30</span>
+          <span class="name">Shutdown</span>
+          <span class="kind">daily</span>
+        </div>
+        <p class="lede" style="text-align:left; margin-top:24px;">Four appointed hours. Nothing else belongs on Wednesday.</p>
+        <div class="actions">
+          <button type="button" class="ghost" onclick="show('seed')">Capture a seed</button>
+        </div>
+      </section>
+
+      <section class="screen" id="seed">
+        <h2 class="page">What needs an hour?</h2>
+        <textarea placeholder="car insurance, quiz Friday, the sink…">car insurance</textarea>
+        <p class="seed-quote">The keeper will not plan your life. It will ask whether this returns.</p>
+        <div class="actions">
+          <button type="button" onclick="show('ask')">Hold this</button>
+          <button type="button" class="quiet" onclick="show('ribbon')">Cancel</button>
+        </div>
+      </section>
+
+      <section class="screen" id="ask">
+        <div class="metalabel">Classify</div>
+        <p class="seed-quote">“car insurance”</p>
+        <p class="ask">Once, or does it return?</p>
+        <div class="choices">
+          <button type="button" class="ghost" onclick="show('ask2')">It returns</button>
+          <button type="button" class="ghost" onclick="show('planted-once')">Once</button>
+          <button type="button" class="quiet" onclick="show('ribbon')">Decide later</button>
+        </div>
+      </section>
+
+      <section class="screen" id="ask2">
+        <div class="metalabel">Classify</div>
+        <p class="ask">How does it return?</p>
+        <div class="choices">
+          <button type="button" class="ghost" onclick="show('planted')">Same date each month</button>
+          <button type="button" class="ghost" onclick="show('planted')">Same weekday</button>
+          <button type="button" class="ghost" onclick="show('planted')">After the last time</button>
+        </div>
+      </section>
+
+      <section class="screen" id="planted">
+        <div class="metalabel">Appointed</div>
+        <div class="keeper held" aria-hidden="true"></div>
+        <div class="rite">Insurance pay-form</div>
+        <p class="lede">Every six months, announced ten days early. Next guess: 4 March.</p>
+        <div class="rule"></div>
+        <p class="first-act">Open the policy. Pay or write the date. Eight minutes.</p>
+        <div class="actions">
+          <button type="button" onclick="show('ribbon')">Place on the ribbon</button>
+          <button type="button" class="ghost">Wrong — edit</button>
+        </div>
+      </section>
+
+      <section class="screen" id="planted-once">
+        <div class="metalabel">Appointed</div>
+        <div class="rite" style="margin-top:48px;">One hour</div>
+        <p class="lede">It will not come back unless you plant it again.</p>
+        <div class="actions">
+          <button type="button" onclick="show('ribbon')">Place on the ribbon</button>
+        </div>
+      </section>
+
+      <section class="screen" id="close">
+        <h2 class="page">What was kept</h2>
+        <div class="close-item">Rent-form <span class="kept">kept</span></div>
+        <div class="close-item">CHEM show-up <span>still ahead</span></div>
+        <div class="close-item">Sink-form <span>not yet</span></div>
+        <p class="lede" style="text-align:left; margin-top:28px;">A missed hour does not carry into Thursday. Tomorrow the lamp is lit again.</p>
+        <div class="actions">
+          <button type="button" onclick="show('hour')">Good night</button>
+        </div>
+      </section>
+
+      <nav class="tabbar">
+        <button class="tab now" type="button" onclick="show('hour')">Hour</button>
+        <button class="tab" type="button" onclick="show('ribbon')">Ribbon</button>
+        <button class="tab" type="button" onclick="show('seed')">Seed</button>
+        <button class="tab" type="button" onclick="show('close')">Close</button>
+      </nav>
+    </div>
+  </div>
+
+  <script>
+    function show(id) {
+      document.querySelectorAll(".screen").forEach((s) => s.classList.remove("on"));
+      document.getElementById(id).classList.add("on");
+      const map = { hour: "Hour", timer: "Hour", smaller: "Hour", ribbon: "Ribbon", seed: "Seed", ask: "Seed", ask2: "Seed", planted: "Ribbon", "planted-once": "Ribbon", close: "Close" };
+      document.querySelectorAll(".tab").forEach((t) => {
+        t.classList.toggle("now", t.textContent === map[id]);
+      });
+    }
+  </script>
+</body>
+</html>
