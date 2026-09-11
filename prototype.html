@@ -3,63 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#F3EEE4" />
+  <link rel="manifest" href="./manifest.webmanifest" />
   <title>Rewired Therapy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --paper: #F3EEE4;
-      --paper-2: #E8E1D4;
-      --ink: #1C1915;
-      --quiet: #5C564C;
-      --hairline: #D4CBBA;
-      --bell: #8F4B2A;
-      --good: #3F5A45;
+      --paper: #F3EEE4; --paper-2: #E8E1D4; --ink: #1C1915; --quiet: #5C564C;
+      --hairline: #D4CBBA; --bell: #8F4B2A; --good: #3F5A45;
       --sans: "IBM Plex Sans", "Helvetica Neue", sans-serif;
       --serif: "Newsreader", "Iowan Old Style", "Palatino", serif;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body { height: 100%; }
-    body {
-      background: var(--paper);
-      color: var(--ink);
-      font-family: var(--sans);
-      font-size: 16px;
-      line-height: 1.45;
-    }
-    .app {
-      max-width: 430px;
-      margin: 0 auto;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    .status {
-      padding: 16px 24px 0;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--quiet);
-    }
-    .screen { display: none; flex-direction: column; flex: 1; padding: 16px 24px 24px; }
+    body { background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.5; }
+    .app { max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+    .screen { display: none; flex-direction: column; flex: 1; padding: 28px 24px 24px; }
     .screen.on { display: flex; }
-    .keeper {
-      width: 64px; height: 64px; border-radius: 50%;
-      border: 1px solid var(--ink); margin: 32px auto 0; position: relative;
-    }
-    .keeper::after {
-      content: ""; position: absolute; inset: 12px; border-radius: 50%;
-      background: var(--bell); opacity: 0.9;
-    }
-    .rite {
-      font-family: var(--serif); font-size: 36px; line-height: 1.08;
-      font-weight: 400; letter-spacing: -0.02em; text-align: center; margin-top: 24px;
-    }
-    .lede { text-align: center; color: var(--quiet); margin-top: 12px; }
-    .rule { height: 1px; background: var(--hairline); margin: 32px 0 20px; }
-    .meta { display: flex; justify-content: space-between; color: var(--quiet); font-size: 14px; }
-    .act { margin-top: 20px; font-family: var(--serif); font-size: 20px; line-height: 1.35; }
-    .actions { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 32px; }
+    .kicker { color: var(--quiet); font-size: 14px; margin-bottom: 12px; }
+    h1 { font-family: var(--serif); font-size: 32px; font-weight: 400; line-height: 1.12; letter-spacing: -0.02em; }
+    .lede { color: var(--quiet); margin-top: 12px; }
+    .act { font-family: var(--serif); font-size: 20px; margin-top: 24px; line-height: 1.35; }
+    .rule { height: 1px; background: var(--hairline); margin: 24px 0; }
+    .actions { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 28px; }
     button {
       font-family: var(--sans); font-size: 16px; border: 1px solid var(--ink);
       background: var(--ink); color: var(--paper); border-radius: 4px;
@@ -67,244 +35,747 @@
     }
     button.ghost { background: transparent; color: var(--ink); }
     button.quiet { background: transparent; border-color: transparent; color: var(--quiet); min-height: 44px; }
-    .tabs {
-      display: flex; justify-content: space-around;
-      border-top: 1px solid var(--hairline); padding: 8px 8px 20px;
+    .tabs { display: flex; border-top: 1px solid var(--hairline); padding: 8px 4px 20px; }
+    .tabs button { flex: 1; border: 0; background: none; color: var(--quiet); font-size: 11px; font-weight: 500; min-height: 44px; padding: 8px 4px; }
+    .tabs button.on { color: var(--ink); }
+    .badge {
+      display: none;
+      min-width: 18px;
+      height: 18px;
+      margin-left: 4px;
+      padding: 0 5px;
+      border-radius: 9px;
+      background: var(--bell);
+      color: var(--paper);
+      font-size: 11px;
+      line-height: 18px;
+      vertical-align: middle;
     }
-    .tabs button {
-      border: 0; background: none; color: var(--quiet); font-size: 12px;
-      font-weight: 500; letter-spacing: 0.04em; min-height: 44px; padding: 8px 12px;
+    .badge.on { display: inline-block; }
+    .strike .name { text-decoration: line-through; color: var(--quiet); }
+    .row { padding: 16px 0; border-bottom: 1px solid var(--hairline); }
+    .row-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+    .row button.quiet { padding: 0; min-height: 32px; font-size: 14px; }
+    .row .name { font-family: var(--serif); font-size: 20px; }
+    .row .meta { color: var(--quiet); font-size: 14px; margin-top: 4px; }
+    input[type="text"] {
+      width: 100%; border: 0; border-bottom: 1px solid var(--ink); background: transparent;
+      padding: 8px 0; font-family: var(--serif); font-size: 24px; color: var(--ink); outline: none;
     }
-    .tabs button.now { color: var(--ink); }
-    h2 { font-family: var(--serif); font-size: 28px; font-weight: 400; margin: 16px 0 8px; }
-    .row {
-      display: flex; justify-content: space-between; align-items: baseline;
-      gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--hairline); cursor: pointer;
-    }
-    .row .when { font-variant-numeric: tabular-nums; color: var(--quiet); font-size: 14px; min-width: 48px; }
-    .row .name { font-family: var(--serif); font-size: 20px; flex: 1; }
-    .row .kind { font-size: 12px; color: var(--quiet); }
-    .ask { font-family: var(--serif); font-size: 28px; line-height: 1.2; margin: 24px 0 8px; }
-    .quote { background: var(--paper-2); padding: 16px; border-radius: 2px; color: var(--quiet); margin-top: 16px; }
-    textarea {
-      width: 100%; min-height: 96px; border: 1px solid var(--hairline);
-      background: var(--paper); border-radius: 4px; padding: 12px;
-      font-family: var(--serif); font-size: 18px; color: var(--ink); resize: none; outline: none;
-    }
-    textarea:focus { border-color: var(--ink); }
-    .choices { display: flex; flex-direction: column; gap: 8px; margin-top: 24px; }
-    .close-item {
-      display: flex; justify-content: space-between; padding: 14px 0;
+    .choices { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+
+    .scroll {
+      max-height: 240px;
+      overflow-y: auto;
+      border-top: 1px solid var(--hairline);
       border-bottom: 1px solid var(--hairline);
+      margin-top: 16px;
     }
-    .close-item span { color: var(--quiet); font-size: 14px; }
-    .kept { color: var(--good); }
+    .pick {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      color: var(--ink);
+      border: 0;
+      border-bottom: 1px solid var(--hairline);
+      border-radius: 0;
+      min-height: 48px;
+    }
+    .pick.on, button.ghost.on { background: var(--paper-2); }
+    .step { display: none; } .step.on { display: block; }
   </style>
 </head>
 <body>
   <div class="app">
-    <div class="status">Rewired Therapy</div>
-    <section class="screen on" id="hour">
-      <div class="keeper" aria-hidden="true"></div>
-      <div class="rite" id="hour-rite">Nothing planted</div>
-      <p class="lede" id="hour-lede">Name one thing that needs an hour.</p>
+    <section class="screen on" id="start">
+      <p class="kicker">Where I start</p>
+      <p class="lede" id="ai-status">Local model: checking…</p>
+      <h1 id="start-title">Let’s get this done now.</h1>
+      <p class="lede" id="start-lede">Discipline beats motivation. Later can wait.</p>
+      <p class="act" id="start-act"></p>
+      <div class="actions">
+        <button type="button" id="btn-begin" onclick="markDone()">Mark as done</button>
+        <button type="button" class="ghost" id="btn-next" onclick="parkAssigned()">Leave it on my plate for later</button>
+        <button type="button" class="quiet" id="btn-pile" onclick="show('disciplined')">Pile it on</button>
+      </div>
+    </section>
+
+    <section class="screen" id="doing">
+      <p class="kicker">Where I start</p>
+      <h1 id="doing-title"></h1>
+      <p class="lede">Let’s get this off your plate. Check it off when you’re done.</p>
+      <p class="act" id="doing-act"></p>
+      <div class="actions">
+        <button type="button" onclick="markDone()">Check it off</button>
+        <button type="button" class="quiet" onclick="show('start')">Leave it on the plate</button>
+      </div>
+    </section>
+
+    <section class="screen" id="plate">
+      <p class="kicker">On my plate</p>
+      <h1>Will be addressed today.</h1>
+      <p class="lede">Every must-do for today — one-time and all-the-time stuff.</p>
       <div class="rule"></div>
-      <div class="meta">
-        <span id="hour-duration">—</span>
-        <span id="hour-when">—</span>
-      </div>
-      <p class="act" id="hour-act">The ribbon is empty.</p>
+      <div id="plate-rows"></div>
+    </section>
+
+    <section class="screen" id="disciplined">
+      <p class="kicker">Pile it on</p>
+      <h1>Lay it on me.</h1>
+      <p class="lede">I’ll hold the organizing. Tell me what has to get done. We keep it so you only have to say it once.</p>
+      <div class="rule"></div>
+      <div id="disc-rows"></div>
       <div class="actions">
-        <button type="button" id="btn-keep" onclick="keepForm()">Keep the form</button>
-        <button type="button" class="ghost" onclick="show('seed')">Capture a seed</button>
-        <button type="button" class="quiet" onclick="removeForm()" id="btn-remove">Remove this form</button>
+        <button type="button" onclick="editingId=null;show('place')">Add to the list</button>
       </div>
     </section>
-    <section class="screen" id="ribbon">
-      <h2>Today’s ribbon</h2>
-      <div id="ribbon-list"></div>
-      <p class="lede" id="ribbon-note" style="text-align:left; margin-top:24px;"></p>
+
+    <section class="screen" id="place">
+      <p class="kicker">Pile it on</p>
+      <h1>Add to the list</h1>
+      <p class="lede">Add it to the list. We’ll figure the rest out.</p>
+      <div class="rule"></div>
+      <div class="step on" id="s-name">
+        <input id="seed-text" type="text" placeholder="the sink, the bill, class" autocomplete="off" />
+        <div class="actions">
+          <button type="button" class="ghost" id="btn-mic" onclick="startDictate()">Speak it</button>
+          <button type="button" onclick="stepKind()">Continue</button>
+          <button type="button" class="quiet" onclick="show('disciplined')">Cancel</button>
+        </div>
+      </div>
+      <div class="step" id="s-kind">
+        <p class="act" id="kind-echo"></p>
+        <p class="lede" id="kind-guess">One time, or all the time?</p>
+        <div class="choices">
+          <button type="button" class="ghost" onclick="needThenRemind('once','')">One time</button>
+          <button type="button" class="ghost" onclick="stepHow()">All the time</button>
+        </div>
+      </div>
+      <div class="step" id="s-how">
+        <p class="lede">How often?</p>
+        <div class="choices">
+          <button type="button" class="ghost" onclick="stepScroll('daily')">Daily</button>
+          <button type="button" class="ghost" onclick="stepScroll('weekly')">Weekly</button>
+          <button type="button" class="ghost" onclick="stepScroll('monthly')">Monthly</button>
+          <button type="button" class="ghost" onclick="stepNeeded()">As needed</button>
+        </div>
+      </div>
+      <div class="step" id="s-when">
+        <p class="lede" id="when-ask"></p>
+        <div class="scroll" id="when-choices"></div>
+        <div class="actions">
+          <button type="button" onclick="confirmScroll()">Use these</button>
+        </div>
+      </div>
+      <div class="step" id="s-needed">
+        <p class="lede">When it’s done?</p>
+        <div class="choices">
+          <button type="button" class="ghost" onclick="needThenRemind('as-needed','clear')">Clear it when done</button>
+          <button type="button" class="ghost" onclick="needThenRemind('as-needed','reassign')">Put it back when done</button>
+        </div>
+      </div>
+      <div class="step" id="s-remind">
+        <p class="lede">How should this tap you?</p>
+        <div class="choices">
+          <button type="button" class="ghost" onclick="setRemind('box')">In the app</button>
+          <button type="button" class="ghost" onclick="setRemind('phone')">Phone alert</button>
+          <button type="button" class="ghost" onclick="setRemind('message')">Message</button>
+          <button type="button" class="ghost" onclick="setRemind('both')">App and phone</button>
+        </div>
+      </div>
+      <div class="step" id="s-clock">
+        <p class="lede">Set a time. You can add more than one.</p>
+        <p class="lede" id="clock-list"></p>
+        <p class="lede">AM or PM</p>
+        <div class="choices" id="ampm-choices"></div>
+        <p class="lede">Hour</p>
+        <div class="scroll" id="hour-choices"></div>
+        <p class="lede">Minute</p>
+        <div class="scroll" id="min-choices"></div>
+        <div class="actions">
+          <button type="button" onclick="clockThenRemind()">Done</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="results">
+      <p class="kicker">The Results</p>
+      <h1>What got a beginning</h1>
+      <p class="lede">This is what the next assignment learns from. No score.</p>
+      <div class="rule"></div>
+      <div id="result-rows"></div>
       <div class="actions">
-        <button type="button" class="ghost" onclick="show('seed')">Capture a seed</button>
+        <button type="button" class="ghost" onclick="downloadTrain()">Download what the model can learn</button>
       </div>
     </section>
-    <section class="screen" id="seed">
-      <h2>What needs an hour?</h2>
-      <textarea id="seed-text" placeholder="a bill, a class, the sink"></textarea>
-      <p class="quote">Once, or does it return? That is the only question.</p>
-      <div class="actions">
-        <button type="button" onclick="holdSeed()">Hold this</button>
-        <button type="button" class="quiet" onclick="show('ribbon')">Cancel</button>
-      </div>
-    </section>
-    <section class="screen" id="ask">
-      <p class="quote" id="ask-quote"></p>
-      <p class="ask">Once, or does it return?</p>
-      <div class="choices">
-        <button type="button" class="ghost" onclick="show('ask2')">It returns</button>
-        <button type="button" class="ghost" onclick="plant('once')">Once</button>
-        <button type="button" class="quiet" onclick="show('ribbon')">Decide later</button>
-      </div>
-    </section>
-    <section class="screen" id="ask2">
-      <p class="ask">How does it return?</p>
-      <div class="choices">
-        <button type="button" class="ghost" onclick="plant('monthly')">Same date each month</button>
-        <button type="button" class="ghost" onclick="plant('weekly')">Same weekday</button>
-        <button type="button" class="ghost" onclick="plant('after-last')">After the last time</button>
-      </div>
-    </section>
-    <section class="screen" id="planted">
-      <div class="keeper" aria-hidden="true"></div>
-      <div class="rite" id="planted-rite"></div>
-      <p class="lede" id="planted-lede"></p>
-      <div class="actions">
-        <button type="button" onclick="show('hour')">It is the hour</button>
-        <button type="button" class="ghost" onclick="show('ribbon')">See the ribbon</button>
-      </div>
-    </section>
-    <section class="screen" id="close">
-      <h2>What was kept</h2>
-      <div id="close-list"></div>
-      <p class="lede" style="text-align:left; margin-top:28px;">Tomorrow the hour is clean again.</p>
-      <div class="actions">
-        <button type="button" onclick="show('hour')">Good night</button>
-      </div>
-    </section>
+
     <nav class="tabs">
-      <button class="now" type="button" onclick="show('hour')">Hour</button>
-      <button type="button" onclick="show('ribbon')">Ribbon</button>
-      <button type="button" onclick="show('seed')">Seed</button>
-      <button type="button" onclick="show('close')">Close</button>
+      <button class="on" type="button" onclick="show('start')">Where I start</button>
+      <button type="button" onclick="show('plate')">On my plate <span class="badge" id="plate-badge"></span></button>
+      <button type="button" onclick="show('disciplined')">Pile it on</button>
+      <button type="button" onclick="show('results')">The Results</button>
     </nav>
   </div>
   <script>
-    const KEY = "rewired-therapy-forms-v1";
-    const CURRENT_KEY = "rewired-therapy-current-v1";
-    const STARTER = [
-      { name: "Sink-form", kind: "daily", when: "19:10", duration: "Ten minutes", action: "Clear the basin only.", kept: false }
-    ];
-    let draft = "";
-    let forms = load();
-    let current = Number(localStorage.getItem(CURRENT_KEY) || 0);
-    function load() {
+    const KEY = "rewired-therapy-v5";
+    const OLLAMA = "http://127.0.0.1:11434/api/chat";
+    const MODEL = "llama3.2";
+    const KEEPER = "You assign one next action for an ADHD executive-function app. Short sentences. No pep talk. No emoji. Return only the first physical step, under 12 words. Examples: Open the bill and read the amount. Put both hands in the sink. Stand up and pick up the shoes.";
+    async function askKeeper(user, system) {
+      const res = await fetch(OLLAMA, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: MODEL,
+          stream: false,
+          messages: [
+            { role: "system", content: system || KEEPER },
+            { role: "user", content: user }
+          ]
+        })
+      });
+      if (!res.ok) throw new Error("ollama " + res.status);
+      const data = await res.json();
+      return ((data.message && data.message.content) || "").trim();
+    }
+    async function pingAI() {
+      const el = document.getElementById("ai-status");
       try {
-        const raw = localStorage.getItem(KEY);
-        if (!raw) return STARTER.slice();
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : STARTER.slice();
-      } catch (e) { return STARTER.slice(); }
+        const r = await fetch("http://127.0.0.1:11434/api/tags");
+        if (!r.ok) throw new Error("down");
+        if (el) el.textContent = "Local model: on";
+        return true;
+      } catch (e) {
+        if (el) el.textContent = "Local model: off";
+        return false;
+      }
     }
-    function save() { localStorage.setItem(KEY, JSON.stringify(forms)); }
-    function formTitle(text, kind) {
-      const clean = text.trim().replace(/\s+/g, " ");
-      if (kind === "once") return clean;
-      if (/form$/i.test(clean)) return clean;
-      return clean + "-form";
+    async function writeFirstStep(item) {
+      if (!item) return;
+      try {
+        const step = await askKeeper("Task name: " + item.name + ". When: " + (item.when || "unspecified") + ". Give the first physical step only.");
+        if (step) {
+          item.action = step.replace(/^["']|["']$/g, "");
+          persist();
+          drawStart();
+        }
+      } catch (e) {}
     }
+
+    const WEEKDAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    let draft = "", pendingKind = "", pendingWhen = "", editingId = null;
+    let items = load().items || [];
+    let assignedId = load().assignedId || null;
+    let log = load().log || [];
+    let train = load().train || [];
+    if (!train.length && log.length) {
+      train = log.map((e) => ({ name: e.name, when: "", step: "", outcome: e.started ? "done" : "parked", at: e.at || "" }));
+      persist();
+    }
+
+    function persist() {
+      localStorage.setItem(KEY, JSON.stringify({ items, assignedId, log, train }));
+    }
+    function load() {
+      try { return JSON.parse(localStorage.getItem(KEY) || "{}") || {}; }
+      catch (e) { return {}; }
+    }
+    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+    function bucketNow() {
+      const h = new Date().getHours();
+      if (h >= 6 && h < 11) return "Morning";
+      if (h >= 11 && h < 14) return "Noon";
+      if (h >= 14 && h < 17) return "Afternoon";
+      if (h >= 17 && h < 21) return "Evening";
+      return "Night";
+    }
+    function todayStamp() {
+      const d = new Date();
+      return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
+    }
+    function onPlateToday(item) {
+      const stamp = todayStamp();
+      const d = new Date();
+      const anchors = item.anchors || (item.anchor ? [item.anchor] : []);
+      if (item.kind === "once") return item.doneOn !== stamp;
+      if (item.kind === "daily") return item.doneOn !== stamp;
+      if (item.kind === "weekly") return item.doneOn !== stamp && anchors.includes(WEEKDAYS[d.getDay()]);
+      if (item.kind === "monthly") {
+        if (item.doneOn === stamp) return false;
+        return anchors.includes(String(d.getDate())) || anchors.includes(d.getDate() + "");
+      }
+      if (item.kind === "as-needed") {
+        if (item.asNeeded === "clear" && item.doneOn) return false;
+        return item.doneOn !== stamp;
+      }
+      if (item.kind === "after-last") return item.doneOn !== stamp;
+      return false;
+    }
+    function plateItems() { return items.filter(onPlateToday); }
+
+    function rememberOutcome(item, outcome) {
+      if (!item) return;
+      train.push({
+        name: item.name,
+        when: item.when || "",
+        step: item.action || "",
+        outcome: outcome,
+        at: new Date().toISOString()
+      });
+      persist();
+    }
+    async function assignWithAI() {
+      const plate = plateItems().filter((i) => i.doneOn !== todayStamp());
+      if (!plate.length) { assignedId = null; persist(); return; }
+      const recent = train.slice(-12).map((e) => e.name + " → " + e.outcome).join("; ");
+      const list = plate.map((i) => i.id + " | " + i.name + " | " + (i.when || "")).join("\n");
+      try {
+        const raw = (await askKeeper(
+          "Pick ONE item for Where I start. Reply with that item id only, nothing else.\nNow: " + new Date().toString() + "\nRecent outcomes: " + (recent || "none") + "\nItems:\n" + list
+        )) || "";
+        const hit = plate.find((i) => raw.includes(i.id) || raw.toLowerCase().includes((i.name || "").toLowerCase()));
+        assignedId = hit ? hit.id : plate[0].id;
+      } catch (e) {
+        assignedId = plate[0].id;
+      }
+      persist();
+      const cur = assigned();
+      if (cur) writeFirstStep(cur);
+      drawStart();
+    }
+    function assignFromPlate() {
+      const plate = plateItems().filter((i) => i.doneOn !== todayStamp());
+      if (!plate.length) { assignedId = null; persist(); return; }
+      const bucket = bucketNow();
+      const timed = plate.find((i) => (i.clocks || [i.clock]).includes(bucket));
+      assignedId = (timed || plate[0]).id;
+      persist();
+    }
+    function assigned() { return items.find((i) => i.id === assignedId) || null; }
+    function waitingCount() {
+      return plateItems().filter((i) => i.doneOn !== todayStamp()).length;
+    }
+    function updateBadge() {
+      const b = document.getElementById("plate-badge");
+      if (!b) return;
+      const n = waitingCount();
+      b.textContent = n ? String(n) : "";
+      b.classList.toggle("on", n > 0);
+    }
+    let pendingRemind = "box";
+    let pendingAm = "AM";
+    let pendingHour = "8";
+    let pendingMin = "00";
+    function setRemind(kind) {
+      pendingRemind = kind;
+      if (kind === "phone" || kind === "both") {
+        if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
+      }
+      finishPlace();
+    }
+    function showClockBuilder() {
+      const am = document.getElementById("ampm-choices");
+      const hours = document.getElementById("hour-choices");
+      const mins = document.getElementById("min-choices");
+      if (!am) return;
+      am.innerHTML = "";
+      hours.innerHTML = "";
+      mins.innerHTML = "";
+      ["AM","PM"].forEach((x) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "ghost" + (pendingAm === x ? " on" : "");
+        b.textContent = x;
+        b.addEventListener("click", () => { pendingAm = x; showClockBuilder(); });
+        am.appendChild(b);
+      });
+      for (let h = 1; h <= 12; h++) {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "pick" + (pendingHour === String(h) ? " on" : "");
+        b.textContent = String(h);
+        b.addEventListener("click", () => { pendingHour = String(h); showClockBuilder(); });
+        hours.appendChild(b);
+      }
+      ["00","05","10","15","20","25","30","35","40","45","50","55"].forEach((m) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "pick" + (pendingMin === m ? " on" : "");
+        b.textContent = m;
+        b.addEventListener("click", () => { pendingMin = m; showClockBuilder(); });
+        mins.appendChild(b);
+      });
+      document.getElementById("clock-list").textContent = pendingHour + ":" + pendingMin + " " + pendingAm;
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-clock").classList.add("on");
+    }
+    function clockThenRemind() {
+      const label = pendingHour + ":" + pendingMin + " " + pendingAm;
+      pendingClocks = [label];
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-remind").classList.add("on");
+    }
+    function pushClock() {
+      const label = pendingHour + ":" + pendingMin + " " + pendingAm;
+      if (!pendingClocks.includes(label)) pendingClocks.push(label);
+      showClockBuilder();
+    }
+    function remindNow(item) {
+      const mode = item.remind || "box";
+      if (mode === "phone" || mode === "both") {
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("Rewired Therapy", { body: item.name });
+        }
+      }
+      return mode === "box" || mode === "both" || mode === "message";
+    }
+
+
     function show(id) {
       document.querySelectorAll(".screen").forEach((s) => s.classList.remove("on"));
       document.getElementById(id).classList.add("on");
-      const map = { hour: "Hour", ribbon: "Ribbon", seed: "Seed", ask: "Seed", ask2: "Seed", planted: "Ribbon", close: "Close" };
-      document.querySelectorAll(".tabs button").forEach((t) => {
-        t.classList.toggle("now", t.textContent === map[id]);
-      });
-      if (id === "ribbon") drawRibbon();
-      if (id === "hour") drawHour();
-      if (id === "close") drawClose();
+      const map = { start: "Where I start", doing: "Where I start", plate: "On my plate", disciplined: "Pile it on", place: "Pile it on", results: "The Results" };
+      document.querySelectorAll(".tabs button").forEach((t) => t.classList.toggle("on", t.textContent === map[id]));
+      if (id === "start") drawStart();
+      if (id === "plate") drawPlate();
+      if (id === "disciplined") drawDisc();
+      if (id === "results") drawResults();
+      if (id === "place" && !editingId) resetPlace();
+      updateBadge();
     }
-    function holdSeed() {
-      draft = document.getElementById("seed-text").value.trim();
-      if (!draft) return;
-      document.getElementById("ask-quote").textContent = "“" + draft + "”";
-      show("ask");
-    }
-    function plant(kind) {
-      const name = formTitle(draft || "untitled", kind);
-      forms.push({ name, kind, when: kind === "once" ? "Once" : "Next", duration: "Eight minutes", action: "Open it. Do the first physical action. Stop.", kept: false });
-      current = forms.length - 1;
-      localStorage.setItem(CURRENT_KEY, String(current));
-      save();
-      document.getElementById("planted-rite").textContent = name;
-      document.getElementById("planted-lede").textContent = kind === "once" ? "It will not come back unless you plant it again." : "Planted as a " + kind + " form.";
-      document.getElementById("seed-text").value = "";
+
+    function resetPlace() {
       draft = "";
-      drawHour(); drawRibbon(); show("planted");
+      document.getElementById("seed-text").value = "";
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-name").classList.add("on");
     }
-    function keepForm() {
-      if (!forms.length) return show("seed");
-      (forms[current] || forms[0]).kept = true;
-      save(); drawClose(); show("close");
-    }
-    function removeForm() {
-      if (!forms.length) return;
-      forms.splice(current, 1);
-      if (current >= forms.length) current = Math.max(0, forms.length - 1);
-      localStorage.setItem(CURRENT_KEY, String(current));
-      save(); drawHour(); drawRibbon(); drawClose();
-      show(forms.length ? "hour" : "seed");
-    }
-    function currentForm() {
-      if (!forms.length) return null;
-      if (current < 0 || current >= forms.length) current = 0;
-      return forms[current];
-    }
-    function choose(index) {
-      current = index;
-      localStorage.setItem(CURRENT_KEY, String(current));
-      drawHour(); show("hour");
-    }
-    function drawHour() {
-      const f = currentForm();
-      const remove = document.getElementById("btn-remove");
-      const keep = document.getElementById("btn-keep");
-      if (!f) {
-        document.getElementById("hour-rite").textContent = "Nothing planted";
-        document.getElementById("hour-lede").textContent = "Name one thing that needs an hour.";
-        document.getElementById("hour-duration").textContent = "—";
-        document.getElementById("hour-when").textContent = "—";
-        document.getElementById("hour-act").textContent = "The ribbon is empty.";
-        remove.style.display = "none"; keep.style.display = "none";
+    function startDictate() {
+      const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const btn = document.getElementById("btn-mic");
+      if (!Rec) {
+        if (btn) btn.textContent = "This browser can’t dictate";
         return;
       }
-      remove.style.display = ""; keep.style.display = "";
-      document.getElementById("hour-rite").textContent = f.name;
-      document.getElementById("hour-lede").textContent = "You do not need to feel ready.";
-      document.getElementById("hour-duration").textContent = f.duration;
-      document.getElementById("hour-when").textContent = f.when;
-      document.getElementById("hour-act").textContent = f.action;
+      const rec = new Rec();
+      rec.lang = "en-US";
+      rec.interimResults = false;
+      if (btn) btn.textContent = "Listening…";
+      rec.onresult = (e) => {
+        const said = (e.results[0] && e.results[0][0] && e.results[0][0].transcript) || "";
+        const box = document.getElementById("seed-text");
+        if (box) box.value = ((box.value || "") + " " + said).trim();
+        if (btn) btn.textContent = "Speak it";
+      };
+      rec.onerror = () => { if (btn) btn.textContent = "Speak it"; };
+      rec.onend = () => { if (btn) btn.textContent = "Speak it"; };
+      rec.start();
     }
-    function drawRibbon() {
-      const list = document.getElementById("ribbon-list");
-      list.innerHTML = "";
-      forms.forEach((f, i) => {
+    function stepKind() {
+      draft = document.getElementById("seed-text").value.trim();
+      if (!draft) return;
+      document.getElementById("kind-echo").textContent = draft + ".";
+      const g = document.getElementById("kind-guess");
+      if (g) g.textContent = "Asking the model…";
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-kind").classList.add("on");
+      guessKind(draft);
+    }
+    async function guessKind(name) {
+      const g = document.getElementById("kind-guess");
+      if (g) g.textContent = "Asking the model…";
+      try {
+        const raw = await askKeeper(
+          "Task: " + name + "\nReply with only: one time\nOR only: all the time",
+          "You classify tasks. Reply with exactly two words: one time  OR  all the time. Nothing else."
+        );
+        const text = (raw || "").toLowerCase();
+        if (!g) return;
+        if (text.includes("all")) g.textContent = "Guess: all the time. Tap a button to confirm.";
+        else if (text.includes("one")) g.textContent = "Guess: one time. Tap a button to confirm.";
+        else g.textContent = "Guess came back unclear. Pick one.";
+      } catch (e) {
+        if (g) g.textContent = "Model did not answer. Pick one.";
+      }
+    }
+    function stepHow() {
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-how").classList.add("on");
+    }
+    let pendingAnchors = [];
+    let pendingClocks = [];
+    let pendingNeeded = "";
+    function stepScroll(kind) {
+      pendingKind = kind;
+      pendingAnchors = [];
+      if (kind === "daily") {
+        showClockBuilder();
+        return;
+      }
+      const box = document.getElementById("when-choices");
+      box.innerHTML = "";
+      let opts = [];
+      if (kind === "daily") {
+        document.getElementById("when-ask").textContent = "Which times of day?";
+        opts = ["Morning","Noon","Afternoon","Evening","Night"];
+      } else if (kind === "weekly") {
+        document.getElementById("when-ask").textContent = "Which days?";
+        opts = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+      } else {
+        document.getElementById("when-ask").textContent = "Which dates?";
+        opts = [];
+        for (let n = 1; n <= 31; n++) opts.push(String(n));
+      }
+      opts.forEach((label) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "pick";
+        b.textContent = label;
+        b.addEventListener("click", () => {
+          if (pendingAnchors.includes(label)) {
+            pendingAnchors = pendingAnchors.filter((x) => x !== label);
+            b.classList.remove("on");
+          } else {
+            pendingAnchors.push(label);
+            b.classList.add("on");
+          }
+        });
+        box.appendChild(b);
+      });
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-when").classList.add("on");
+    }
+    function confirmScroll() {
+      showClockBuilder();
+    }
+    function needThenRemind(kind, needed) {
+      pendingKind = kind;
+      pendingNeeded = needed || "";
+      showClockBuilder();
+    }
+    function stepNeeded() {
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-needed").classList.add("on");
+    }
+    function stepClockPick(kind, needed) {
+      pendingKind = kind;
+      pendingNeeded = needed || "";
+      pendingClocks = [];
+      const box = document.getElementById("clock-choices");
+      box.innerHTML = "";
+      ["Morning","Noon","Afternoon","Evening","Night"].forEach((label) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "pick";
+        b.textContent = label;
+        b.addEventListener("click", () => {
+          if (pendingClocks.includes(label)) {
+            pendingClocks = pendingClocks.filter((x) => x !== label);
+            b.classList.remove("on");
+          } else {
+            pendingClocks.push(label);
+            b.classList.add("on");
+          }
+        });
+        box.appendChild(b);
+      });
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-clock").classList.add("on");
+    }
+    function stepClock(kind, anchor) {
+      pendingAnchors = anchor ? [anchor] : [];
+      stepClockPick(kind, "");
+    }
+    function finishPlace() {
+      const whenBits = pendingAnchors.concat(pendingClocks);
+      const row = {
+        id: editingId || uid(),
+        name: draft,
+        kind: pendingKind,
+        anchors: pendingAnchors.slice(),
+        clocks: pendingClocks.slice(),
+        asNeeded: pendingNeeded,
+        remind: pendingRemind,
+        when: whenBits.join(" · "),
+        action: "Dopamine is on the other side of done. How good will that feel?",
+        doneOn: ""
+      };
+      if (editingId) {
+        const i = items.findIndex((x) => x.id === editingId);
+        if (i >= 0) row.doneOn = items[i].doneOn || "";
+        if (i >= 0) items[i] = row;
+        else items.push(row);
+      } else {
+        items.push(row);
+      }
+      editingId = null;
+      persist();
+      assignFromPlate();
+      writeFirstStep(row);
+      show("disciplined");
+    }
+    function placeItem(kind, anchor, clock) {
+      pendingKind = kind;
+      pendingAnchors = anchor ? [anchor] : [];
+      pendingClocks = clock ? [clock] : [];
+      pendingNeeded = "";
+      finishPlace();
+    }
+
+    function drawStart() {
+      if (!assigned() || (assigned() && assigned().doneOn === todayStamp())) assignFromPlate();
+      const f = assigned();
+      const begin = document.getElementById("btn-begin");
+      const next = document.getElementById("btn-next");
+      if (!f) {
+        document.getElementById("start-title").textContent = "Let’s get this done now.";
+        document.getElementById("start-lede").textContent = "Discipline beats motivation. Later can wait.";
+        document.getElementById("start-act").textContent = "";
+        begin.style.display = "none";
+        next.style.display = "none";
+        const pile = document.getElementById("btn-pile");
+        if (pile) pile.style.display = "";
+        return;
+      }
+      begin.style.display = "";
+      next.style.display = "";
+      const pile = document.getElementById("btn-pile");
+      if (pile) pile.style.display = "none";
+      document.getElementById("start-title").textContent = f.name + ".";
+      document.getElementById("start-lede").textContent = "Don’t wait for urgency. Don’t wait for motivation. Let’s just do it.";
+      document.getElementById("start-act").textContent = f.action;
+    }
+    function parkAssigned() {
+      rememberOutcome(assigned(), "parked");
+      show("plate");
+    }
+    function beginAssigned() {
+      const f = assigned();
+      if (!f) return;
+      document.getElementById("doing-title").textContent = f.name + ".";
+      document.getElementById("doing-act").textContent = f.action;
+      show("doing");
+    }
+    function assignNext() {
+      const plate = plateItems().filter((i) => i.id !== assignedId && i.doneOn !== todayStamp());
+      if (plate[0]) { assignedId = plate[0].id; persist(); }
+      drawStart();
+    }
+    function markDone() {
+      const f = assigned();
+      if (!f) return show("start");
+      f.doneOn = todayStamp();
+      const already = log.some((e) => e.name === f.name && (e.day === todayStamp() || (e.at || "").slice(0,10) === new Date().toISOString().slice(0,10)));
+      if (!already) log.push({ name: f.name, at: new Date().toISOString(), day: todayStamp(), bucket: bucketNow(), started: true });
+      rememberOutcome(f, "done");
+      persist();
+      assignFromPlate();
+      assignWithAI();
+      show("results");
+    }
+
+    function drawPlate() {
+      const box = document.getElementById("plate-rows");
+      const rows = plateItems();
+      box.innerHTML = "";
+      if (!rows.length) {
+        box.innerHTML = '<p class="lede">Nothing on the plate yet. Pile something on, and it will show up here.</p>';
+        return;
+      }
+      rows.forEach((f) => {
         const row = document.createElement("div");
         row.className = "row";
-        row.innerHTML = '<span class="when"></span><span class="name"></span><span class="kind"></span>';
-        row.querySelector(".when").textContent = f.when;
+        const status = f.doneOn === todayStamp() ? "begun" : "waiting";
+        row.innerHTML = '<div class="name"></div><div class="meta"></div>';
         row.querySelector(".name").textContent = f.name;
-        row.querySelector(".kind").textContent = f.kind;
-        row.addEventListener("click", () => choose(i));
-        list.appendChild(row);
+        row.querySelector(".meta").textContent = (f.when || "today") + " · " + status;
+        box.appendChild(row);
       });
-      const n = forms.length;
-      document.getElementById("ribbon-note").textContent = n === 0 ? "No appointed hours yet." : n === 1 ? "One appointed hour." : n + " appointed hours.";
     }
-    function drawClose() {
-      const list = document.getElementById("close-list");
-      list.innerHTML = "";
-      forms.forEach((f) => {
+    function drawDisc() {
+      const box = document.getElementById("disc-rows");
+      box.innerHTML = "";
+      if (!items.length) {
+        box.innerHTML = '<p class="lede">Discipline beats motivation. Pile it on here.</p>';
+        return;
+      }
+      items.forEach((f) => {
         const row = document.createElement("div");
-        row.className = "close-item";
-        const mark = document.createElement("span");
-        mark.textContent = f.kept ? "kept" : "not yet";
-        if (f.kept) mark.className = "kept";
-        row.appendChild(document.createTextNode(f.name + " "));
-        row.appendChild(mark);
-        list.appendChild(row);
+        row.className = "row";
+        row.innerHTML = '<div class="row-top"><div class="name"></div><span><button type="button" class="quiet" data-edit>Edit</button><button type="button" class="quiet" data-drop>Remove</button></span></div><div class="meta"></div>';
+        row.querySelector(".name").textContent = f.name;
+        const kindLabel = ({once:"one time",daily:"daily",weekly:"weekly",monthly:"monthly","as-needed":"as needed"})[f.kind] || f.kind;
+        row.querySelector(".meta").textContent = kindLabel + (f.when ? " · " + f.when : "");
+        row.querySelector("[data-drop]").addEventListener("click", () => dropItem(f.id));
+        row.querySelector("[data-edit]").addEventListener("click", () => editItem(f.id));
+        box.appendChild(row);
       });
     }
-    drawHour(); drawRibbon(); drawClose();
+    function editItem(id) {
+      const f = items.find((x) => x.id === id);
+      if (!f) return;
+      editingId = id;
+      draft = f.name;
+      pendingKind = f.kind || "once";
+      pendingAnchors = (f.anchors || []).slice();
+      pendingClocks = (f.clocks || []).slice();
+      pendingNeeded = f.asNeeded || "";
+      pendingRemind = f.remind || "box";
+      document.getElementById("seed-text").value = f.name;
+      document.getElementById("kind-echo").textContent = f.name + ".";
+      show("place");
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-kind").classList.add("on");
+    }
+    function dropItem(id) {
+      items = items.filter((x) => x.id !== id);
+      if (assignedId === id) assignedId = null;
+      persist();
+      assignFromPlate();
+      drawDisc();
+      drawPlate();
+      drawStart();
+    }
+    function drawResults() {
+      const box = document.getElementById("result-rows");
+      const stamp = todayStamp();
+      const seen = new Set();
+      const rows = [];
+      items.forEach((f) => {
+        const key = (f.name || "").toLowerCase();
+        if (!key || seen.has(key)) return;
+        const done = f.doneOn === stamp || log.some((e) => e.name.toLowerCase() === key && (e.day === stamp || (e.at || "").slice(0,10) === new Date().toISOString().slice(0,10)));
+        const onPlate = onPlateToday(f) || done;
+        if (!onPlate && !done) return;
+        seen.add(key);
+        rows.push({ name: f.name, done: done });
+      });
+      box.innerHTML = "";
+      if (!rows.length) {
+        box.innerHTML = '<p class="lede">No results yet. Begin one assigned thing.</p>';
+        return;
+      }
+      rows.forEach((e) => {
+        const row = document.createElement("div");
+        row.className = "row" + (e.done ? " strike" : "");
+        row.innerHTML = '<div class="name"></div><div class="meta"></div>';
+        row.querySelector(".name").textContent = e.name;
+        row.querySelector(".meta").textContent = e.done ? "Done" : "Still on the plate";
+        box.appendChild(row);
+      });
+    }
+
+    function downloadTrain() {
+      const blob = new Blob([JSON.stringify({ train, log }, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "rewired-training.json";
+      a.click();
+    }
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
+    assignFromPlate();
+    updateBadge();
+    drawStart();
+    pingAI().then((on) => { if (on) assignWithAI(); });
   </script>
 </body>
 </html>
