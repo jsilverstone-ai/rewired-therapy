@@ -54,13 +54,19 @@
     .badge.on { display: inline-block; }
     .strike .name { text-decoration: line-through; color: var(--quiet); }
     .row { padding: 16px 0; border-bottom: 1px solid var(--hairline); }
-    .row-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
-    .row button.quiet { padding: 0; min-height: 32px; font-size: 14px; }
+    .row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+    .row-actions { display: flex; gap: 24px; flex-shrink: 0; padding-top: 2px; }
+    .row-actions button {
+      min-height: 40px;
+      padding: 8px 12px;
+      font-size: 14px;
+    }
     .row .name { font-family: var(--serif); font-size: 20px; }
     .row .meta { color: var(--quiet); font-size: 14px; margin-top: 4px; }
-    input[type="text"] {
+    input[type="text"], input[type="password"], input#api-key {
       width: 100%; border: 0; border-bottom: 1px solid var(--ink); background: transparent;
-      padding: 8px 0; font-family: var(--serif); font-size: 24px; color: var(--ink); outline: none;
+      padding: 12px 0; font-family: var(--serif); font-size: 18px; color: var(--ink); outline: none;
+      margin: 16px 0 8px;
     }
     .choices { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
 
@@ -84,11 +90,21 @@
     }
     .pick.on, button.ghost.on { background: var(--paper-2); }
     .step { display: none; } .step.on { display: block; }
+    .poke { display: none; padding: 0 0 16px; }
+    .poke.on { display: block; }
   </style>
 </head>
 <body>
   <div class="app">
     <section class="screen on" id="start">
+      <div class="poke" id="poke">
+        <p class="act" id="poke-copy"></p>
+        <div class="actions" style="padding-top:16px">
+          <button type="button" onclick="pokeHere()">I'm here</button>
+          <button type="button" class="ghost" onclick="markDone()">Complete</button>
+          <button type="button" class="quiet" onclick="ignoreToday()">Ignore for the day</button>
+        </div>
+      </div>
       <p class="kicker">Where I start</p>
       <p class="lede" id="ai-status">Local model: checking…</p>
       <h1 id="start-title">Let’s get this done now.</h1>
@@ -98,6 +114,7 @@
         <button type="button" id="btn-begin" onclick="markDone()">Mark as done</button>
         <button type="button" class="ghost" id="btn-next" onclick="parkAssigned()">Leave it on my plate for later</button>
         <button type="button" class="quiet" id="btn-pile" onclick="show('disciplined')">Pile it on</button>
+        <button type="button" class="ghost" id="btn-cloud" onclick="show('settings')">Turn the cloud model on</button>
       </div>
     </section>
 
@@ -140,8 +157,18 @@
         <input id="seed-text" type="text" placeholder="the sink, the bill, class" autocomplete="off" />
         <div class="actions">
           <button type="button" class="ghost" id="btn-mic" onclick="startDictate()">Speak it</button>
-          <button type="button" onclick="stepKind()">Continue</button>
+          <button type="button" onclick="startAuto()">Continue</button>
           <button type="button" class="quiet" onclick="show('disciplined')">Cancel</button>
+        </div>
+      </div>
+      <div class="step" id="s-auto">
+        <p class="act" id="auto-name"></p>
+        <p class="lede" id="auto-wait">Filing this…</p>
+        <p class="act" id="auto-plan"></p>
+        <p class="lede" id="auto-step"></p>
+        <div class="actions" id="auto-actions" style="display:none">
+          <button type="button" onclick="acceptAuto()">That’s right</button>
+          <button type="button" class="ghost" onclick="stepKind()">Change it</button>
         </div>
       </div>
       <div class="step" id="s-kind">
@@ -176,12 +203,14 @@
         </div>
       </div>
       <div class="step" id="s-remind">
-        <p class="lede">How should this tap you?</p>
+        <p class="lede">How should this tap you? Select every one you want.</p>
         <div class="choices">
-          <button type="button" class="ghost" onclick="setRemind('box')">In the app</button>
-          <button type="button" class="ghost" onclick="setRemind('phone')">Phone alert</button>
-          <button type="button" class="ghost" onclick="setRemind('message')">Message</button>
-          <button type="button" class="ghost" onclick="setRemind('both')">App and phone</button>
+          <button type="button" class="ghost" id="rem-app" onclick="toggleRemind('app')">App</button>
+          <button type="button" class="ghost" id="rem-phone" onclick="toggleRemind('phone')">Phone</button>
+          <button type="button" class="ghost" id="rem-text" onclick="toggleRemind('text')">Text</button>
+        </div>
+        <div class="actions">
+          <button type="button" onclick="saveRemind()">Done</button>
         </div>
       </div>
       <div class="step" id="s-clock">
@@ -199,6 +228,23 @@
       </div>
     </section>
 
+    <section class="screen" id="settings">
+      <p class="kicker">Away from the office</p>
+      <h1>Cloud model</h1>
+      <p class="lede">This app uses a cloud model, not the PC. Paste a Groq key (free) or an xAI key. It stays on this device only.</p>
+      <div class="rule"></div>
+      <div class="choices">
+        <button type="button" class="ghost" onclick="setProvider('groq')">Groq</button>
+        <button type="button" class="ghost" onclick="setProvider('xai')">xAI</button>
+      </div>
+      <p class="lede" id="provider-now"></p>
+      <input id="api-key" type="text" placeholder="paste API key" autocomplete="off" autocapitalize="off" spellcheck="false" />
+      <p class="lede" id="key-saved"></p>
+      <div class="actions">
+        <button type="button" onclick="saveKey()">Save key</button>
+        <button type="button" class="quiet" onclick="show('start')">Back</button>
+      </div>
+    </section>
     <section class="screen" id="results">
       <p class="kicker">The Results</p>
       <h1>What got a beginning</h1>
@@ -207,6 +253,7 @@
       <div id="result-rows"></div>
       <div class="actions">
         <button type="button" class="ghost" onclick="downloadTrain()">Download what the model can learn</button>
+        <button type="button" class="quiet" onclick="show('settings')">Cloud model</button>
       </div>
     </section>
 
@@ -222,34 +269,82 @@
     const OLLAMA = "http://127.0.0.1:11434/api/chat";
     const MODEL = "llama3.2";
     const KEEPER = "You assign one next action for an ADHD executive-function app. Short sentences. No pep talk. No emoji. Return only the first physical step, under 12 words. Examples: Open the bill and read the amount. Put both hands in the sink. Stand up and pick up the shoes.";
+    function cloudCfg() {
+      try { return JSON.parse(localStorage.getItem("rewired-cloud") || "{}"); }
+      catch (e) { return {}; }
+    }
+    async function askCloud(user, system) {
+      const cfg = cloudCfg();
+      const key = cfg.key || "";
+      const who = cfg.provider || "groq";
+      if (!key) throw new Error("no cloud key");
+      const messages = [
+        { role: "system", content: system || KEEPER },
+        { role: "user", content: user }
+      ];
+      if (who === "xai") {
+        const res = await fetch("https://api.x.ai/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+          body: JSON.stringify({ model: "grok-2-latest", messages: messages, temperature: 0.2 })
+        });
+        if (!res.ok) throw new Error("xai " + res.status);
+        const data = await res.json();
+        return ((((data.choices || [])[0] || {}).message || {}).content || "").trim();
+      }
+      const models = ["llama-3.3-70b-versatile","llama-3.1-8b-instant","openai/gpt-oss-20b"];
+      let last = "groq";
+      for (const model of models) {
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+          body: JSON.stringify({ model: model, messages: messages, temperature: 0.2 })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return ((((data.choices || [])[0] || {}).message || {}).content || "").trim();
+        }
+        last = "groq " + res.status + " " + model;
+      }
+      throw new Error(last);
+    }
     async function askKeeper(user, system) {
-      const res = await fetch(OLLAMA, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: MODEL,
-          stream: false,
-          messages: [
-            { role: "system", content: system || KEEPER },
-            { role: "user", content: user }
-          ]
-        })
-      });
-      if (!res.ok) throw new Error("ollama " + res.status);
-      const data = await res.json();
-      return ((data.message && data.message.content) || "").trim();
+      return askCloud(user, system);
     }
     async function pingAI() {
       const el = document.getElementById("ai-status");
-      try {
-        const r = await fetch("http://127.0.0.1:11434/api/tags");
-        if (!r.ok) throw new Error("down");
-        if (el) el.textContent = "Local model: on";
+      if (cloudCfg().key) {
+        if (el) el.textContent = "Cloud model: on";
         return true;
-      } catch (e) {
-        if (el) el.textContent = "Local model: off";
-        return false;
       }
+      if (el) el.textContent = "Cloud model: off — add a key under The Results";
+      return false;
+    }
+    function setProvider(name) {
+      const cfg = cloudCfg();
+      cfg.provider = name;
+      localStorage.setItem("rewired-cloud", JSON.stringify(cfg));
+      drawSettings();
+    }
+    function saveKey() {
+      const box = document.getElementById("api-key");
+      const note = document.getElementById("key-saved");
+      const cfg = cloudCfg();
+      cfg.provider = cfg.provider || "groq";
+      cfg.key = ((box && box.value) || "").trim();
+      if (!cfg.key) {
+        if (note) note.textContent = "Paste the key first, then tap Save key.";
+        return;
+      }
+      localStorage.setItem("rewired-cloud", JSON.stringify(cfg));
+      drawSettings();
+      pingAI();
+      if (note) note.textContent = "Saved. Back on Where I start it should say Cloud model: on.";
+    }
+    function drawSettings() {
+      const cfg = cloudCfg();
+      const el = document.getElementById("provider-now");
+      if (el) el.textContent = "Using " + (cfg.provider || "groq") + (cfg.key ? " · key saved on this phone" : " · no key yet");
     }
     async function writeFirstStep(item) {
       if (!item) return;
@@ -259,6 +354,8 @@
           item.action = step.replace(/^["']|["']$/g, "");
           persist();
           drawStart();
+    checkPokes();
+    setInterval(checkPokes, 20000);
         }
       } catch (e) {}
     }
@@ -344,13 +441,54 @@
       const cur = assigned();
       if (cur) writeFirstStep(cur);
       drawStart();
+    checkPokes();
+    setInterval(checkPokes, 20000);
+    }
+    function parseClock(label) {
+      const s = String(label || "");
+      const m = s.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (!m) return null;
+      let h = parseInt(m[1], 10);
+      const min = parseInt(m[2], 10);
+      const ap = m[3].toUpperCase();
+      if (ap === "PM" && h < 12) h += 12;
+      if (ap === "AM" && h === 12) h = 0;
+      return h * 60 + min;
+    }
+    function itemMinutes(item) {
+      const clocks = item.clocks || (item.clock ? [item.clock] : []);
+      const nums = clocks.map(parseClock).filter((n) => n !== null);
+      return nums.length ? Math.min.apply(null, nums) : 24 * 60;
+    }
+    function nowMinutes() {
+      const d = new Date();
+      return d.getHours() * 60 + d.getMinutes();
+    }
+    function waitingPlate() {
+      return plateItems().filter((i) => i.doneOn !== todayStamp() && i.ignoredOn !== todayStamp());
+    }
+    function chronoPlate() {
+      return waitingPlate().slice().sort((a, b) => itemMinutes(a) - itemMinutes(b));
+    }
+    function nextInLine() {
+      const list = chronoPlate();
+      if (!list.length) return null;
+      const now = nowMinutes();
+      const due = list.find((i) => itemMinutes(i) <= now);
+      return due || list[0];
+    }
+    function avgResponse() {
+      const rows = train.filter((e) => typeof e.responseMin === "number");
+      if (!rows.length) return null;
+      return Math.round(rows.reduce((s, e) => s + e.responseMin, 0) / rows.length);
+    }
+    function lastDoneName() {
+      const rows = train.filter((e) => e.outcome === "done").slice(-1);
+      return rows[0] ? rows[0].name : "";
     }
     function assignFromPlate() {
-      const plate = plateItems().filter((i) => i.doneOn !== todayStamp());
-      if (!plate.length) { assignedId = null; persist(); return; }
-      const bucket = bucketNow();
-      const timed = plate.find((i) => (i.clocks || [i.clock]).includes(bucket));
-      assignedId = (timed || plate[0]).id;
+      const nxt = nextInLine();
+      assignedId = nxt ? nxt.id : null;
       persist();
     }
     function assigned() { return items.find((i) => i.id === assignedId) || null; }
@@ -364,14 +502,22 @@
       b.textContent = n ? String(n) : "";
       b.classList.toggle("on", n > 0);
     }
-    let pendingRemind = "box";
+    let pendingRemind = [];
     let pendingAm = "AM";
     let pendingHour = "8";
     let pendingMin = "00";
-    function setRemind(kind) {
-      pendingRemind = kind;
-      if (kind === "phone" || kind === "both") {
-        if ("Notification" in window && Notification.permission === "default") Notification.requestPermission();
+    function toggleRemind(kind) {
+      if (pendingRemind.includes(kind)) pendingRemind = pendingRemind.filter((x) => x !== kind);
+      else pendingRemind.push(kind);
+      ["app","phone","text"].forEach((k) => {
+        const b = document.getElementById("rem-" + k);
+        if (b) b.classList.toggle("on", pendingRemind.includes(k));
+      });
+    }
+    function saveRemind() {
+      if (!pendingRemind.length) pendingRemind = ["app"];
+      if (pendingRemind.includes("phone") && "Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
       }
       finishPlace();
     }
@@ -408,37 +554,52 @@
       document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
       document.getElementById("s-clock").classList.add("on");
     }
+    function paintRemind() {
+      ["app","phone","text"].forEach((k) => {
+        const b = document.getElementById("rem-" + k);
+        if (b) b.classList.toggle("on", pendingRemind.includes(k));
+      });
+    }
     function clockThenRemind() {
       const label = pendingHour + ":" + pendingMin + " " + pendingAm;
       pendingClocks = [label];
+      if (!pendingRemind.length) pendingRemind = [];
       document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
       document.getElementById("s-remind").classList.add("on");
+      paintRemind();
     }
     function pushClock() {
       const label = pendingHour + ":" + pendingMin + " " + pendingAm;
       if (!pendingClocks.includes(label)) pendingClocks.push(label);
       showClockBuilder();
     }
+    function remindList(item) {
+      if (Array.isArray(item.remind)) return item.remind;
+      if (item.remind === "both") return ["app","phone"];
+      if (item.remind === "box") return ["app"];
+      if (item.remind === "message") return ["text"];
+      if (item.remind) return [item.remind];
+      return ["app"];
+    }
     function remindNow(item) {
-      const mode = item.remind || "box";
-      if (mode === "phone" || mode === "both") {
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("Rewired Therapy", { body: item.name });
-        }
+      const modes = remindList(item);
+      if (modes.includes("phone") && "Notification" in window && Notification.permission === "granted") {
+        new Notification("Rewired Therapy", { body: item.name });
       }
-      return mode === "box" || mode === "both" || mode === "message";
+      return modes.includes("app") || modes.includes("text") || modes.includes("phone");
     }
 
 
     function show(id) {
       document.querySelectorAll(".screen").forEach((s) => s.classList.remove("on"));
       document.getElementById(id).classList.add("on");
-      const map = { start: "Where I start", doing: "Where I start", plate: "On my plate", disciplined: "Pile it on", place: "Pile it on", results: "The Results" };
+      const map = { start: "Where I start", doing: "Where I start", plate: "On my plate", disciplined: "Pile it on", place: "Pile it on", results: "The Results", settings: "The Results" };
       document.querySelectorAll(".tabs button").forEach((t) => t.classList.toggle("on", t.textContent === map[id]));
       if (id === "start") drawStart();
       if (id === "plate") drawPlate();
       if (id === "disciplined") drawDisc();
       if (id === "results") drawResults();
+      if (id === "settings") drawSettings();
       if (id === "place" && !editingId) resetPlace();
       updateBadge();
     }
@@ -469,6 +630,60 @@
       rec.onerror = () => { if (btn) btn.textContent = "Speak it"; };
       rec.onend = () => { if (btn) btn.textContent = "Speak it"; };
       rec.start();
+    }
+    let pendingAuto = null;
+    function startAuto() {
+      draft = document.getElementById("seed-text").value.trim();
+      if (!draft) return;
+      document.getElementById("auto-name").textContent = draft + ".";
+      document.getElementById("auto-wait").textContent = "Filing this…";
+      document.getElementById("auto-plan").textContent = "";
+      document.getElementById("auto-step").textContent = "";
+      document.getElementById("auto-actions").style.display = "none";
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-auto").classList.add("on");
+      autoFile(draft);
+    }
+    async function autoFile(name) {
+      const today = WEEKDAYS[new Date().getDay()];
+      try {
+        const raw = await askKeeper(
+          "Task: " + name + "\nToday is " + today + ".\nReply JSON only, no markdown: {\"kind\":\"once|daily|weekly|monthly|as-needed\",\"anchors\":[],\"clock\":\"8:00 AM\",\"step\":\"first physical action\"}\nanchors are weekdays or month dates as strings. clock is like 7:30 AM.",
+          "You file ADHD tasks. Guess how it repeats and the first physical step. JSON only."
+        );
+        let plan = null;
+        const match = (raw || "").match(/\{[\s\S]*\}/);
+        if (match) plan = JSON.parse(match[0]);
+        if (!plan || !plan.kind) throw new Error("bad plan");
+        pendingAuto = plan;
+        pendingKind = plan.kind;
+        pendingAnchors = Array.isArray(plan.anchors) ? plan.anchors.map(String) : [];
+        const clock = plan.clock || "8:00 AM";
+        pendingClocks = [clock];
+        const bits = clock.replace(":", " ").split(/\s+/);
+        if (bits[0]) pendingHour = String(parseInt(bits[0], 10) || 8);
+        if (bits[1] && bits[1].length >= 2) pendingMin = bits[1].slice(0,2).padStart(2,"0");
+        if (/pm/i.test(clock)) pendingAm = "PM";
+        else pendingAm = "AM";
+        document.getElementById("auto-wait").textContent = "Does this look right?";
+        const kindLabel = ({once:"one time",daily:"every day",weekly:"weekly",monthly:"monthly","as-needed":"as needed"})[plan.kind] || plan.kind;
+        document.getElementById("auto-plan").textContent = [kindLabel].concat(pendingAnchors).concat(pendingClocks).join(" · ");
+        document.getElementById("auto-step").textContent = plan.step || "";
+        document.getElementById("auto-actions").style.display = "";
+      } catch (e) {
+        const why = (e && e.message) ? e.message : "unknown";
+        const hint = !cloudCfg().key
+          ? "No key on this address. Open The Results, Cloud model, paste the Groq key again. File and localhost do not share keys."
+          : "Groq said: " + why + ". Change it and pick by hand.";
+        document.getElementById("auto-wait").textContent = hint;
+        document.getElementById("auto-actions").style.display = "";
+      }
+    }
+    function acceptAuto() {
+      if (pendingAuto && pendingAuto.step) {
+        window._autoStep = pendingAuto.step;
+      }
+      clockThenRemind();
     }
     function stepKind() {
       draft = document.getElementById("seed-text").value.trim();
@@ -596,7 +811,7 @@
         asNeeded: pendingNeeded,
         remind: pendingRemind,
         when: whenBits.join(" · "),
-        action: "Dopamine is on the other side of done. How good will that feel?",
+        action: window._autoStep || "Dopamine is on the other side of done. How good will that feel?",
         doneOn: ""
       };
       if (editingId) {
@@ -608,6 +823,7 @@
         items.push(row);
       }
       editingId = null;
+      window._autoStep = "";
       persist();
       assignFromPlate();
       writeFirstStep(row);
@@ -621,6 +837,82 @@
       finishPlace();
     }
 
+
+    function pokeState() {
+      try { return JSON.parse(localStorage.getItem("rewired-pokes") || "{}"); }
+      catch (e) { return {}; }
+    }
+    function savePokes(s) { localStorage.setItem("rewired-pokes", JSON.stringify(s)); }
+    function pokeKey(item, kind) { return todayStamp() + ":" + item.id + ":" + kind; }
+    let activePoke = null;
+    function checkPokes() {
+      const box = document.getElementById("poke");
+      const copy = document.getElementById("poke-copy");
+      if (!box) return;
+      const now = nowMinutes();
+      const state = pokeState();
+      const list = chronoPlate();
+      activePoke = null;
+      for (const item of list) {
+        const t = itemMinutes(item);
+        if (t >= 24 * 60) continue;
+        const k30 = pokeKey(item, "30");
+        const k5 = pokeKey(item, "5");
+        const klate = pokeKey(item, "late");
+        if (now >= t - 30 && now < t - 5 && !state[k30]) {
+          activePoke = { item: item, kind: "30", key: k30 };
+          copy.textContent = "In about 30 minutes: " + item.name + ".";
+          box.classList.add("on");
+          return;
+        }
+        if (now >= t - 5 && now < t && !state[k5]) {
+          activePoke = { item: item, kind: "5", key: k5 };
+          copy.textContent = "Five minutes. " + item.name + " is next.";
+          box.classList.add("on");
+          return;
+        }
+        if (now >= t + 5 && !state[klate] && item.doneOn !== todayStamp()) {
+          activePoke = { item: item, kind: "late", key: klate };
+          copy.textContent = item.name + " started five minutes ago. Complete it, or ignore it for today.";
+          box.classList.add("on");
+          return;
+        }
+      }
+      box.classList.remove("on");
+    }
+    function pokeHere() {
+      if (activePoke) {
+        const s = pokeState();
+        s[activePoke.key] = Date.now();
+        savePokes(s);
+        const answered = nowMinutes() - itemMinutes(activePoke.item);
+        rememberOutcome(activePoke.item, "answered");
+        train[train.length - 1].responseMin = Math.max(0, answered + (activePoke.kind === "30" ? 30 : activePoke.kind === "5" ? 5 : 0));
+        persist();
+        assignedId = activePoke.item.id;
+        persist();
+      }
+      document.getElementById("poke").classList.remove("on");
+      show("start");
+    }
+    function ignoreToday() {
+      const f = (activePoke && activePoke.item) || assigned();
+      if (f) {
+        f.ignoredOn = todayStamp();
+        rememberOutcome(f, "ignored");
+        persist();
+      }
+      if (activePoke) {
+        const s = pokeState();
+        s[activePoke.key] = Date.now();
+        savePokes(s);
+      }
+      document.getElementById("poke").classList.remove("on");
+      assignFromPlate();
+      drawStart();
+    checkPokes();
+    setInterval(checkPokes, 20000);
+    }
     function drawStart() {
       if (!assigned() || (assigned() && assigned().doneOn === todayStamp())) assignFromPlate();
       const f = assigned();
@@ -634,15 +926,28 @@
         next.style.display = "none";
         const pile = document.getElementById("btn-pile");
         if (pile) pile.style.display = "";
+        const cloud = document.getElementById("btn-cloud");
+        if (cloud) cloud.style.display = cloudCfg().key ? "none" : "";
         return;
       }
       begin.style.display = "";
       next.style.display = "";
       const pile = document.getElementById("btn-pile");
       if (pile) pile.style.display = "none";
+      const cloud = document.getElementById("btn-cloud");
+      if (cloud) cloud.style.display = cloudCfg().key ? "none" : "";
+      const line = chronoPlate();
+      const idx = line.findIndex((x) => x.id === f.id);
+      const upcoming = line[idx + 1];
+      const done = lastDoneName();
+      const avg = avgResponse();
+      let lede = "This is next.";
+      if (upcoming) lede = "After this: " + upcoming.name + ".";
+      if (done) lede += " You already began " + done + ".";
+      if (avg !== null) lede += " You usually answer in about " + avg + " min.";
       document.getElementById("start-title").textContent = f.name + ".";
-      document.getElementById("start-lede").textContent = "Don’t wait for urgency. Don’t wait for motivation. Let’s just do it.";
-      document.getElementById("start-act").textContent = f.action;
+      document.getElementById("start-lede").textContent = lede;
+      document.getElementById("start-act").textContent = f.action || "Don’t wait for urgency. Let’s just do it.";
     }
     function parkAssigned() {
       rememberOutcome(assigned(), "parked");
@@ -659,6 +964,8 @@
       const plate = plateItems().filter((i) => i.id !== assignedId && i.doneOn !== todayStamp());
       if (plate[0]) { assignedId = plate[0].id; persist(); }
       drawStart();
+    checkPokes();
+    setInterval(checkPokes, 20000);
     }
     function markDone() {
       const f = assigned();
@@ -675,7 +982,7 @@
 
     function drawPlate() {
       const box = document.getElementById("plate-rows");
-      const rows = plateItems();
+      const rows = chronoPlate().concat(plateItems().filter((i) => i.doneOn === todayStamp()));
       box.innerHTML = "";
       if (!rows.length) {
         box.innerHTML = '<p class="lede">Nothing on the plate yet. Pile something on, and it will show up here.</p>';
@@ -701,7 +1008,7 @@
       items.forEach((f) => {
         const row = document.createElement("div");
         row.className = "row";
-        row.innerHTML = '<div class="row-top"><div class="name"></div><span><button type="button" class="quiet" data-edit>Edit</button><button type="button" class="quiet" data-drop>Remove</button></span></div><div class="meta"></div>';
+        row.innerHTML = '<div class="row-top"><div class="name"></div><div class="row-actions"><button type="button" class="ghost" data-edit>Edit</button><button type="button" class="ghost" data-drop>Remove</button></div></div><div class="meta"></div>';
         row.querySelector(".name").textContent = f.name;
         const kindLabel = ({once:"one time",daily:"daily",weekly:"weekly",monthly:"monthly","as-needed":"as needed"})[f.kind] || f.kind;
         row.querySelector(".meta").textContent = kindLabel + (f.when ? " · " + f.when : "");
@@ -719,7 +1026,7 @@
       pendingAnchors = (f.anchors || []).slice();
       pendingClocks = (f.clocks || []).slice();
       pendingNeeded = f.asNeeded || "";
-      pendingRemind = f.remind || "box";
+      pendingRemind = remindList(f);
       document.getElementById("seed-text").value = f.name;
       document.getElementById("kind-echo").textContent = f.name + ".";
       show("place");
@@ -734,6 +1041,8 @@
       drawDisc();
       drawPlate();
       drawStart();
+    checkPokes();
+    setInterval(checkPokes, 20000);
     }
     function drawResults() {
       const box = document.getElementById("result-rows");
@@ -775,6 +1084,8 @@
     assignFromPlate();
     updateBadge();
     drawStart();
+    checkPokes();
+    setInterval(checkPokes, 20000);
     pingAI().then((on) => { if (on) assignWithAI(); });
   </script>
 </body>
