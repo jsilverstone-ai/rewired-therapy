@@ -285,10 +285,10 @@
         </div>
       </div>
       <div class="step" id="s-clock">
-        <p class="lede">AM or PM. Type the time. 730 is 7:30.</p>
+        <p class="lede">AM or PM. Type the time.</p>
         <div id="ampm-choices"></div>
-        <input id="clock-type" type="tel" inputmode="numeric" placeholder="730" autocomplete="off" />
-        <p class="lede" id="clock-list"></p>
+        <p class="lede" id="clock-list" style="text-align:center;font-size:20px;color:var(--ink);margin-top:12px"></p>
+        <input id="clock-type" type="tel" inputmode="numeric" placeholder="type here" autocomplete="off" />
         <div class="actions">
           <button type="button" class="ghost" onclick="startClockVoice()">Speak the time</button>
           <button type="button" onclick="clockThenRemind()">Done</button>
@@ -866,7 +866,7 @@
       const parsed = parseTypedClock(box && box.value);
       if (parsed) { pendingHour = parsed.hour; pendingMin = parsed.min; }
       const list = document.getElementById("clock-list");
-      if (list) list.textContent = pendingHour + ":" + pendingMin + " " + pendingAm;
+      if (list) list.textContent = (box && box.value && parsed) ? (pendingHour + ":" + pendingMin + " " + pendingAm) : (pendingHour && (box && box.value) ? pendingHour + ":" + pendingMin + " " + pendingAm : "");
     }
     function showClockBuilder() {
       const am = document.getElementById("ampm-choices");
