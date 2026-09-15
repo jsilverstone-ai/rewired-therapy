@@ -1253,7 +1253,13 @@
     setInterval(checkPokes, 20000);
     }
     function drawStart() {
-      assignFromPlate();
+      if (window._pinAssign) {
+        assignedId = window._pinAssign;
+        window._pinAssign = null;
+        persist();
+      } else {
+        assignFromPlate();
+      }
       const f = assigned();
       const begin = document.getElementById("btn-begin");
       const next = document.getElementById("btn-next");
@@ -1399,11 +1405,12 @@
       items.forEach((f) => {
         const key = (f.name || "").toLowerCase();
         if (!key || seen.has(key)) return;
-        const done = f.doneOn === stamp || log.some((e) => e.name.toLowerCase() === key && (e.day === stamp || (e.at || "").slice(0,10) === new Date().toISOString().slice(0,10)));
-        const onPlate = onPlateToday(f) || done;
-        if (!onPlate && !done) return;
+        const done = sameDay(f.doneOn, stamp) || log.some((e) => e.name.toLowerCase() === key && (e.day === stamp || (e.at || "").slice(0,10) === new Date().toISOString().slice(0,10)));
+        const ignored = sameDay(f.ignoredOn, stamp);
+        const onPlate = onPlateToday(f) && !ignored && !done;
+        if (!onPlate && !done && !ignored) return;
         seen.add(key);
-        rows.push({ id: f.id, name: f.name, done: done });
+        rows.push({ id: f.id, name: f.name, done: done, ignored: ignored });
       });
       box.innerHTML = "";
       if (!rows.length) {
@@ -1415,13 +1422,12 @@
         row.className = "row" + (e.done ? " strike" : "");
         row.innerHTML = '<div class="row-top"><div class="name"></div></div><div class="meta"></div>';
         row.querySelector(".name").textContent = e.name;
-        row.querySelector(".meta").textContent = e.done ? "Done" : "Still on the plate";
-        if (e.done) {
+        row.querySelector(".meta").textContent = e.done ? "Done" : (e.ignored ? "Ignored today" : "On the plate");
+        if (e.done || e.ignored) {
           const b = document.createElement("button");
           b.type = "button";
-          b.className = "ghost";
-          b.textContent = "Undo";
           b.className = "ghost undo";
+          b.textContent = "Bring back";
           b.addEventListener("click", () => undoDone(e.id));
           row.querySelector(".row-top").appendChild(b);
         }
@@ -1436,9 +1442,7 @@
       f.ignoredOn = "";
       log = log.filter((e) => !(e.name === f.name && (e.day === todayStamp() || (e.at || "").slice(0,10) === new Date().toISOString().slice(0,10))));
       rememberOutcome(f, "undone");
-      assignedId = f.id;
-      persist();
-      assignFromPlate();
+      window._pinAssign = f.id;
       assignedId = f.id;
       persist();
       show("start");
