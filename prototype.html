@@ -37,6 +37,24 @@
     }
     button.ghost { background: transparent; color: var(--ink); }
     button.quiet { background: transparent; border-color: transparent; color: var(--quiet); min-height: 48px; }
+    #ampm-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    #ampm-choices button { width: 100%; }
+    #clock-type {
+      width: 100%;
+      min-height: 52px;
+      margin: 8px 0 0;
+      padding: 14px 16px;
+      border: 1px solid var(--ink);
+      border-radius: 4px;
+      background: transparent;
+      font-family: var(--sans);
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-align: center;
+      color: var(--ink);
+      outline: none;
+    }
     .tabs {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -267,11 +285,10 @@
         </div>
       </div>
       <div class="step" id="s-clock">
-        <p class="lede">AM or PM, then type the time. 730 is 7:30.</p>
-        <div class="choices" id="ampm-choices"></div>
+        <p class="lede">AM or PM. Type the time. 730 is 7:30.</p>
+        <div id="ampm-choices"></div>
         <input id="clock-type" type="tel" inputmode="numeric" placeholder="730" autocomplete="off" />
         <p class="lede" id="clock-list"></p>
-        <div class="choices" id="clock-chips"></div>
         <div class="actions">
           <button type="button" class="ghost" onclick="startClockVoice()">Speak the time</button>
           <button type="button" onclick="clockThenRemind()">Done</button>
@@ -862,25 +879,6 @@
         b.addEventListener("click", () => { pendingAm = x; applyClockType(); showClockBuilder(); });
         am.appendChild(b);
       });
-      const chips = document.getElementById("clock-chips");
-      if (chips) {
-        chips.innerHTML = "";
-        ["7:00","8:00","12:00","5:00","6:30"].forEach((label) => {
-          const b = document.createElement("button");
-          b.type = "button";
-          b.className = "ghost";
-          b.textContent = label + " " + pendingAm;
-          b.addEventListener("click", () => {
-            const p = parseTypedClock(label);
-            if (!p) return;
-            pendingHour = p.hour; pendingMin = p.min;
-            const box = document.getElementById("clock-type");
-            if (box) box.value = p.hour + p.min;
-            applyClockType();
-          });
-          chips.appendChild(b);
-        });
-      }
       const box = document.getElementById("clock-type");
       if (box && !box.dataset.wired) {
         box.dataset.wired = "1";
