@@ -706,7 +706,10 @@
     function itemMinutes(item) {
       const clocks = item.clocks || (item.clock ? [item.clock] : []);
       const nums = clocks.map(parseClock).filter((n) => n !== null);
-      return nums.length ? Math.min.apply(null, nums) : 24 * 60;
+      if (nums.length) return Math.min.apply(null, nums);
+      const fromWhen = parseClock(item.when);
+      if (fromWhen !== null) return fromWhen;
+      return 24 * 60;
     }
     function nowMinutes() {
       const d = new Date();
@@ -722,8 +725,8 @@
       const list = chronoPlate();
       if (!list.length) return null;
       const now = nowMinutes();
-      const arrived = list.filter((i) => itemMinutes(i) <= now);
-      if (arrived.length) return arrived[0];
+      const upcoming = list.filter((i) => itemMinutes(i) >= now);
+      if (upcoming.length) return upcoming[0];
       return list[0];
     }
     function avgResponse() {
