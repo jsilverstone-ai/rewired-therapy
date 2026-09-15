@@ -404,10 +404,7 @@
     let googleToken = "";
     let importDraft = [];
     function googleClientId() {
-      const raw = cleanSecret(cloudCfg().googleClient || "");
-      const fallback = "617086018843-3imv5i62s9supoi50keqn6p79290ae78.apps.googleusercontent.com";
-      if (!raw || /gitpush/i.test(raw) || !/\.apps\.googleusercontent\.com$/i.test(raw)) return fallback;
-      return raw;
+      return "617086018843-3imv5i62s9supoi50keqn6p79290ae78.apps.googleusercontent.com";
     }
     function saveGoogle() { saveAllCloud(); }
     function saveAllCloud() {
@@ -619,7 +616,11 @@
         return sameDay(due, stamp);
       }
       if (item.kind === "daily") return item.doneOn !== stamp && (anchors.length ? anchors.includes(WEEKDAYS[d.getDay()]) : true);
-      if (item.kind === "weekly") return item.doneOn !== stamp;
+      if (item.kind === "weekly") {
+        if (item.doneOn && sameDay(item.doneOn, stamp)) return false;
+        if (!anchors.length) return true;
+        return anchors.includes(WEEKDAYS[d.getDay()]);
+      }
       if (item.kind === "monthly") {
         if (item.doneOn === stamp) return false;
         return anchors.includes(String(d.getDate())) || anchors.includes(d.getDate() + "");
