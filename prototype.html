@@ -69,7 +69,7 @@
     }
     .badge.on { display: inline-block; }
     .meter-wrap { margin-top: 20px; }
-    .meter-label { color: var(--quiet); font-size: 14px; margin-bottom: 8px; }
+    .meter-label { color: var(--quiet); font-size: 13px; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .meter {
       height: 10px;
       background: var(--paper-2);
@@ -1434,7 +1434,7 @@
       const allN = rows.length;
       const lab = document.getElementById("meter-label");
       const fill = document.getElementById("meter-fill");
-      if (lab) lab.textContent = allN ? (doneN + " of " + allN + " things off your plate today. Whoop whoop 🎉") : "Nothing off the plate yet.";
+      if (lab) lab.textContent = allN ? (doneN + " of " + allN + " off the plate today. Whoop whoop 🙌") : "Nothing off the plate yet.";
       if (fill) fill.style.width = (allN ? Math.round(doneN / allN * 100) : 0) + "%";
       box.innerHTML = "";
       if (!rows.length) {
