@@ -152,6 +152,7 @@
       <div class="actions">
         <button type="button" id="btn-begin" onclick="markDone()">Mark as done</button>
         <button type="button" class="ghost" id="btn-next" onclick="parkAssigned()">Leave it on my plate for later</button>
+        <button type="button" class="quiet" id="btn-ignore" onclick="ignoreToday()">Ignore today</button>
         <button type="button" class="quiet" id="btn-pile" onclick="show('disciplined')">Pile it on</button>
         <button type="button" class="ghost" id="btn-cloud" onclick="show('settings')">Turn the cloud model on</button>
       </div>
@@ -424,6 +425,7 @@
           item.action = step.replace(/^["']|["']$/g, "");
           persist();
           pruneSpentOnce();
+    settleOverdue();
     noteVisit();
     askPhoneAlerts();
     drawStart();
@@ -718,6 +720,7 @@
       const cur = assigned();
       if (cur) writeFirstStep(cur);
       pruneSpentOnce();
+    settleOverdue();
     noteVisit();
     askPhoneAlerts();
     drawStart();
@@ -767,6 +770,19 @@
     }
     function chronoPlate() {
       return waitingPlate().slice().sort((a, b) => itemMinutes(a) - itemMinutes(b));
+    }
+    function isOverdue(item) {
+      const m = itemMinutes(item);
+      return m < 24 * 60 && m < nowMinutes();
+    }
+    function settleOverdue() {
+      const stamp = todayStamp();
+      waitingPlate().forEach((i) => {
+        if (i.returnedOn === stamp) return;
+        if (!isOverdue(i) || sameDay(i.doneOn, stamp)) return;
+        i.ignoredOn = stamp;
+      });
+      persist();
     }
     function nextInLine() {
       const list = chronoPlate();
@@ -1252,6 +1268,7 @@
       const f = (activePoke && activePoke.item) || assigned();
       if (f) {
         f.ignoredOn = todayStamp();
+        f.returnedOn = "";
         noteIgnore();
         rememberOutcome(f, "ignored");
         persist();
@@ -1264,6 +1281,7 @@
       document.getElementById("poke").classList.remove("on");
       assignFromPlate();
       pruneSpentOnce();
+    settleOverdue();
     noteVisit();
     askPhoneAlerts();
     drawStart();
@@ -1287,6 +1305,8 @@
         document.getElementById("start-act").textContent = "";
         begin.style.display = "none";
         next.style.display = "none";
+        const ign0 = document.getElementById("btn-ignore");
+        if (ign0) ign0.style.display = "none";
         const pile = document.getElementById("btn-pile");
         if (pile) pile.style.display = "";
         const cloud = document.getElementById("btn-cloud");
@@ -1295,6 +1315,8 @@
       }
       begin.style.display = "";
       next.style.display = "";
+      const ign = document.getElementById("btn-ignore");
+      if (ign) ign.style.display = "";
       const pile = document.getElementById("btn-pile");
       if (pile) pile.style.display = "none";
       const cloud = document.getElementById("btn-cloud");
@@ -1324,6 +1346,7 @@
       const plate = plateItems().filter((i) => i.id !== assignedId && i.doneOn !== todayStamp());
       if (plate[0]) { assignedId = plate[0].id; persist(); }
       pruneSpentOnce();
+    settleOverdue();
     noteVisit();
     askPhoneAlerts();
     drawStart();
@@ -1344,6 +1367,7 @@
     }
 
     function drawPlate() {
+      settleOverdue();
       const box = document.getElementById("plate-rows");
       const rows = chronoPlate().slice();
       const cur = assigned();
@@ -1409,6 +1433,7 @@
       drawDisc();
       drawPlate();
       pruneSpentOnce();
+    settleOverdue();
     noteVisit();
     askPhoneAlerts();
     drawStart();
@@ -1416,6 +1441,7 @@
     setInterval(checkPokes, 20000);
     }
     function drawResults() {
+      settleOverdue();
       const box = document.getElementById("result-rows");
       const stamp = todayStamp();
       const seen = new Set();
@@ -1464,6 +1490,7 @@
       if (!f) return;
       f.doneOn = "";
       f.ignoredOn = "";
+      f.returnedOn = todayStamp();
       log = log.filter((e) => !(e.name === f.name && (e.day === todayStamp() || (e.at || "").slice(0,10) === new Date().toISOString().slice(0,10))));
       rememberOutcome(f, "undone");
       window._pinAssign = f.id;
@@ -1482,6 +1509,7 @@
     assignFromPlate();
     updateBadge();
     pruneSpentOnce();
+    settleOverdue();
     noteVisit();
     askPhoneAlerts();
     drawStart();
