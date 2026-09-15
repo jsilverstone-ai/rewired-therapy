@@ -1390,10 +1390,11 @@
     checkPokes();
     setInterval(checkPokes, 20000);
     }
-    function markDone() {
-      const f = assigned();
-      if (!f) return show("start");
+    function markDoneId(id) {
+      const f = items.find((x) => x.id === id);
+      if (!f) return;
       f.doneOn = todayStamp();
+      f.ignoredOn = "";
       const already = log.some((e) => e.name === f.name && (e.day === todayStamp() || (e.at || "").slice(0,10) === new Date().toISOString().slice(0,10)));
       if (!already) log.push({ name: f.name, at: new Date().toISOString(), day: todayStamp(), bucket: bucketNow(), started: true });
       rememberOutcome(f, "done");
@@ -1401,6 +1402,11 @@
       assignFromPlate();
       assignWithAI();
       show("results");
+    }
+    function markDone() {
+      const f = assigned();
+      if (!f) return show("start");
+      markDoneId(f.id);
     }
 
     function drawPlate() {
@@ -1510,14 +1516,17 @@
         row.innerHTML = '<div class="row-top"><div class="name"></div></div><div class="meta"></div>';
         row.querySelector(".name").textContent = e.name;
         row.querySelector(".meta").textContent = e.done ? "Done" : (e.ignored ? "Ignored today" : "On the plate");
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ghost undo";
         if (e.done || e.ignored) {
-          const b = document.createElement("button");
-          b.type = "button";
-          b.className = "ghost undo";
           b.textContent = "Bring back";
           b.addEventListener("click", () => undoDone(e.id));
-          row.querySelector(".row-top").appendChild(b);
+        } else {
+          b.textContent = "Mark done";
+          b.addEventListener("click", () => markDoneId(e.id));
         }
+        row.querySelector(".row-top").appendChild(b);
         box.appendChild(row);
       });
     }
