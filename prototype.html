@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#F3EEE4" />
+  <meta name="theme-color" content="#2F3E4E" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <title>Rewired Therapy</title>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -12,8 +12,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --paper: #F3EEE4; --paper-2: #E8E1D4; --ink: #1C1915; --quiet: #5C564C;
-      --hairline: #D4CBBA; --bell: #8F4B2A; --good: #3F5A45;
+      --paper: #F3F0EA; --paper-2: #E7E0D6; --ink: #2F3E4E; --quiet: #5C6B7A;
+      --hairline: #D5CFC4; --bell: #C07A5A; --good: #3F5A45;
       --sans: "Lexend", "Segoe UI", sans-serif;
       --serif: "Lexend", "Segoe UI", sans-serif;
     }
@@ -406,6 +406,8 @@
           item.action = step.replace(/^["']|["']$/g, "");
           persist();
           pruneSpentOnce();
+    noteVisit();
+    askPhoneAlerts();
     drawStart();
     checkPokes();
     setInterval(checkPokes, 20000);
@@ -698,6 +700,8 @@
       const cur = assigned();
       if (cur) writeFirstStep(cur);
       pruneSpentOnce();
+    noteVisit();
+    askPhoneAlerts();
     drawStart();
     checkPokes();
     setInterval(checkPokes, 20000);
@@ -1131,6 +1135,38 @@
     }
 
 
+    function careState() {
+      try { return JSON.parse(localStorage.getItem("rewired-care") || "{}"); }
+      catch (e) { return {}; }
+    }
+    function saveCare(s) { localStorage.setItem("rewired-care", JSON.stringify(s)); }
+    function noteVisit() {
+      const s = careState();
+      const now = Date.now();
+      if (s.lastOpen) s.lastGapMin = Math.round((now - s.lastOpen) / 60000);
+      s.lastOpen = now;
+      s.opens = (s.opens || 0) + 1;
+      saveCare(s);
+    }
+    function noteIgnore() {
+      const s = careState();
+      s.ignores = (s.ignores || 0) + 1;
+      s.lastIgnore = Date.now();
+      saveCare(s);
+    }
+    function askPhoneAlerts() {
+      if (!("Notification" in window)) return;
+      if (Notification.permission === "default") Notification.requestPermission();
+    }
+    function phonePing(title, body) {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      const show = (reg) => reg && reg.showNotification ? reg.showNotification(title, { body: body, tag: "rewired-" + title, renotify: true }) : new Notification(title, { body: body });
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(show).catch(() => new Notification(title, { body: body }));
+      } else {
+        try { new Notification(title, { body: body }); } catch (e) {}
+      }
+    }
     function pokeState() {
       try { return JSON.parse(localStorage.getItem("rewired-pokes") || "{}"); }
       catch (e) { return {}; }
@@ -1157,6 +1193,7 @@
           copy.textContent = "In 30 min: " + item.name;
           document.getElementById("poke-late").style.display = "none";
           box.classList.add("on");
+          if (!state[k30 + ":ping"]) { phonePing("Thirty minutes", item.name); state[k30 + ":ping"] = 1; savePokes(state); }
           return;
         }
         if (now >= t - 5 && now < t && !state[k5]) {
@@ -1164,6 +1201,7 @@
           copy.textContent = "In 5 min: " + item.name;
           document.getElementById("poke-late").style.display = "none";
           box.classList.add("on");
+          if (!state[k5 + ":ping"]) { phonePing("Five minutes", item.name); state[k5 + ":ping"] = 1; savePokes(state); }
           return;
         }
         if (now >= t + 5 && !state[klate] && item.doneOn !== todayStamp()) {
@@ -1171,6 +1209,7 @@
           copy.textContent = item.name + " — still waiting.";
           document.getElementById("poke-late").style.display = "";
           box.classList.add("on");
+          if (!state[klate + ":ping"]) { phonePing("Still waiting", item.name + ". Complete or ignore today."); state[klate + ":ping"] = 1; savePokes(state); }
           return;
         }
       }
@@ -1195,6 +1234,7 @@
       const f = (activePoke && activePoke.item) || assigned();
       if (f) {
         f.ignoredOn = todayStamp();
+        noteIgnore();
         rememberOutcome(f, "ignored");
         persist();
       }
@@ -1206,6 +1246,8 @@
       document.getElementById("poke").classList.remove("on");
       assignFromPlate();
       pruneSpentOnce();
+    noteVisit();
+    askPhoneAlerts();
     drawStart();
     checkPokes();
     setInterval(checkPokes, 20000);
@@ -1258,6 +1300,8 @@
       const plate = plateItems().filter((i) => i.id !== assignedId && i.doneOn !== todayStamp());
       if (plate[0]) { assignedId = plate[0].id; persist(); }
       pruneSpentOnce();
+    noteVisit();
+    askPhoneAlerts();
     drawStart();
     checkPokes();
     setInterval(checkPokes, 20000);
@@ -1341,6 +1385,8 @@
       drawDisc();
       drawPlate();
       pruneSpentOnce();
+    noteVisit();
+    askPhoneAlerts();
     drawStart();
     checkPokes();
     setInterval(checkPokes, 20000);
@@ -1408,6 +1454,8 @@
     assignFromPlate();
     updateBadge();
     pruneSpentOnce();
+    noteVisit();
+    askPhoneAlerts();
     drawStart();
     checkPokes();
     setInterval(checkPokes, 20000);

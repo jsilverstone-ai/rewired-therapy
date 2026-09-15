@@ -1,0 +1,9 @@
+{
+  "name": "Rewired Therapy",
+  "short_name": "Rewired",
+  "start_url": "./prototype.html",
+  "display": "standalone",
+  "background_color": "#F3F0EA",
+  "theme_color": "#2F3E4E",
+  "lang": "en"
+}
