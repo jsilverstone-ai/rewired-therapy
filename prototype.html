@@ -1434,7 +1434,7 @@
       const allN = rows.length;
       const lab = document.getElementById("meter-label");
       const fill = document.getElementById("meter-fill");
-      if (lab) lab.textContent = allN ? (doneN + " of " + allN + " had a beginning") : "Nothing counted yet today.";
+      if (lab) lab.textContent = allN ? (doneN + " of " + allN + " things off your plate today. Whoop whoop 🎉") : "Nothing off the plate yet.";
       if (fill) fill.style.width = (allN ? Math.round(doneN / allN * 100) : 0) + "%";
       box.innerHTML = "";
       if (!rows.length) {
