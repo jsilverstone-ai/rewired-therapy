@@ -302,6 +302,12 @@
     const OLLAMA = "http://127.0.0.1:11434/api/chat";
     const MODEL = "llama3.2";
     const KEEPER = "You assign one next action for an ADHD executive-function app. Short sentences. No pep talk. No emoji. Return only the first physical step, under 12 words. Examples: Open the bill and read the amount. Put both hands in the sink. Stand up and pick up the shoes.";
+    function cleanSecret(s) {
+      return String(s || "")
+        .replace(/git\s*push/gi, "")
+        .replace(/\s+/g, "")
+        .trim();
+    }
     function cloudCfg() {
       try { return JSON.parse(localStorage.getItem("rewired-cloud") || "{}"); }
       catch (e) { return {}; }
@@ -364,7 +370,7 @@
       const note = document.getElementById("key-saved");
       const cfg = cloudCfg();
       cfg.provider = cfg.provider || "groq";
-      cfg.key = ((box && box.value) || "").trim();
+      cfg.key = cleanSecret((box && box.value) || "");
       if (!cfg.key) {
         if (note) note.textContent = "Paste the key first, then tap Save key.";
         return;
@@ -412,11 +418,14 @@
     let googleToken = "";
     let importDraft = [];
     function googleClientId() {
-      return (cloudCfg().googleClient || "").trim();
+      const raw = cleanSecret(cloudCfg().googleClient || "");
+      const fallback = "617086018843-3imv5i62s9supoi50keqn6p79290ae78.apps.googleusercontent.com";
+      if (!raw || /gitpush/i.test(raw) || !/\.apps\.googleusercontent\.com$/i.test(raw)) return fallback;
+      return raw;
     }
     function saveGoogle() {
       const cfg = cloudCfg();
-      cfg.googleClient = (document.getElementById("google-client").value || "").trim();
+      cfg.googleClient = cleanSecret(document.getElementById("google-client").value || "");
       localStorage.setItem("rewired-cloud", JSON.stringify(cfg));
       const n = document.getElementById("google-saved");
       if (n) n.textContent = cfg.googleClient ? "Google ID saved on this device." : "Paste the Client ID first.";
@@ -1165,7 +1174,11 @@
     setInterval(checkPokes, 20000);
     }
     function drawStart() {
-      if (!assigned() || (assigned() && assigned().doneOn === todayStamp())) assignFromPlate();
+      const cur0 = assigned();
+      const waiting = waitingPlate();
+      if (!cur0 || cur0.doneOn === todayStamp() || cur0.ignoredOn === todayStamp() || !waiting.some((i) => i.id === cur0.id)) {
+        assignFromPlate();
+      }
       const f = assigned();
       const begin = document.getElementById("btn-begin");
       const next = document.getElementById("btn-next");
@@ -1230,7 +1243,12 @@
 
     function drawPlate() {
       const box = document.getElementById("plate-rows");
-      const rows = chronoPlate().concat(plateItems().filter((i) => sameDay(i.doneOn, todayStamp())));
+      const rows = chronoPlate().slice();
+      const cur = assigned();
+      if (cur && !cur.doneOn && !rows.some((i) => i.id === cur.id) && onPlateToday(cur)) rows.unshift(cur);
+      plateItems().filter((i) => sameDay(i.doneOn, todayStamp())).forEach((i) => {
+        if (!rows.some((x) => x.id === i.id)) rows.push(i);
+      });
       box.innerHTML = "";
       if (!rows.length) {
         box.innerHTML = '<p class="lede">Nothing on the plate yet. Pile something on, and it will show up here.</p>';
