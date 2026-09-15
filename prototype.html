@@ -265,11 +265,11 @@
         <button type="button" class="ghost" onclick="setProvider('xai')">xAI</button>
       </div>
       <p class="lede" id="provider-now"></p>
-      <input id="api-key" type="text" placeholder="paste API key" autocomplete="off" autocapitalize="off" spellcheck="false" />
+      <input id="api-key" type="text" placeholder="paste API key" autocomplete="off" autocapitalize="off" spellcheck="false" onblur="saveAllCloud()" />
       <p class="lede" id="key-saved"></p>
       <div class="rule"></div>
       <p class="lede">Google Client ID (Calendar + email)</p>
-      <input id="google-client" type="text" placeholder="xxxxx.apps.googleusercontent.com" autocomplete="off" autocapitalize="off" spellcheck="false" />
+      <input id="google-client" type="text" placeholder="xxxxx.apps.googleusercontent.com" autocomplete="off" autocapitalize="off" spellcheck="false" onblur="saveAllCloud()" />
       <p class="lede" id="google-saved"></p>
       <div class="actions">
         <button type="button" onclick="saveKey()">Save key</button>
@@ -365,21 +365,7 @@
       localStorage.setItem("rewired-cloud", JSON.stringify(cfg));
       drawSettings();
     }
-    function saveKey() {
-      const box = document.getElementById("api-key");
-      const note = document.getElementById("key-saved");
-      const cfg = cloudCfg();
-      cfg.provider = cfg.provider || "groq";
-      cfg.key = cleanSecret((box && box.value) || "");
-      if (!cfg.key) {
-        if (note) note.textContent = "Paste the key first, then tap Save key.";
-        return;
-      }
-      localStorage.setItem("rewired-cloud", JSON.stringify(cfg));
-      drawSettings();
-      pingAI();
-      if (note) note.textContent = "Saved. Back on Where I start it should say Cloud model: on.";
-    }
+    function saveKey() { saveAllCloud(); }
     function drawSettings() {
       const cfg = cloudCfg();
       const el = document.getElementById("provider-now");
@@ -423,12 +409,22 @@
       if (!raw || /gitpush/i.test(raw) || !/\.apps\.googleusercontent\.com$/i.test(raw)) return fallback;
       return raw;
     }
-    function saveGoogle() {
+    function saveGoogle() { saveAllCloud(); }
+    function saveAllCloud() {
       const cfg = cloudCfg();
-      cfg.googleClient = cleanSecret(document.getElementById("google-client").value || "");
+      cfg.provider = cfg.provider || "groq";
+      const keyBox = document.getElementById("api-key");
+      const gBox = document.getElementById("google-client");
+      if (keyBox && keyBox.value.trim()) cfg.key = cleanSecret(keyBox.value);
+      if (gBox && gBox.value.trim()) cfg.googleClient = cleanSecret(gBox.value);
       localStorage.setItem("rewired-cloud", JSON.stringify(cfg));
       const n = document.getElementById("google-saved");
-      if (n) n.textContent = cfg.googleClient ? "Google ID saved on this device." : "Paste the Client ID first.";
+      if (n) n.textContent = cfg.googleClient ? "Google ID saved." : "No Google ID in the box.";
+      const k = document.getElementById("key-saved");
+      if (k) k.textContent = cfg.key ? "Groq key saved." : (k.textContent || "");
+      drawSettings();
+      pingAI();
+      return cfg;
     }
     function connectGoogle() {
       const id = googleClientId();
