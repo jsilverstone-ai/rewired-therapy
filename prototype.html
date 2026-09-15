@@ -68,6 +68,20 @@
       text-transform: none;
     }
     .badge.on { display: inline-block; }
+    .meter-wrap { margin-top: 20px; }
+    .meter-label { color: var(--quiet); font-size: 14px; margin-bottom: 8px; }
+    .meter {
+      height: 10px;
+      background: var(--paper-2);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .meter > span {
+      display: block;
+      height: 100%;
+      background: var(--bell);
+      width: 0;
+    }
     .undo {
       min-height: 40px;
       min-width: 108px;
@@ -305,6 +319,10 @@
       <p class="kicker">The Results</p>
       <h1>Take a look.</h1>
       <p class="lede">See how discipline paid off. It’s time to celebrate.</p>
+      <div class="meter-wrap">
+        <p class="meter-label" id="meter-label"></p>
+        <div class="meter" aria-hidden="true"><span id="meter-fill"></span></div>
+      </div>
       <div class="rule"></div>
       <div id="result-rows"></div>
       <div class="actions">
@@ -1412,6 +1430,12 @@
         seen.add(key);
         rows.push({ id: f.id, name: f.name, done: done, ignored: ignored });
       });
+      const doneN = rows.filter((e) => e.done).length;
+      const allN = rows.length;
+      const lab = document.getElementById("meter-label");
+      const fill = document.getElementById("meter-fill");
+      if (lab) lab.textContent = allN ? (doneN + " of " + allN + " had a beginning") : "Nothing counted yet today.";
+      if (fill) fill.style.width = (allN ? Math.round(doneN / allN * 100) : 0) + "%";
       box.innerHTML = "";
       if (!rows.length) {
         box.innerHTML = '<p class="lede">Nothing to celebrate yet. Begin one assigned thing.</p>';
