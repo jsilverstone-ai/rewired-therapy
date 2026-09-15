@@ -46,24 +46,36 @@
     }
     .tabs button {
       flex: none; width: 100%; border: 0; background: none; color: var(--quiet);
-      font-size: 10px; font-weight: 600; min-height: 56px; padding: 10px 4px;
-      text-transform: uppercase; letter-spacing: 0.06em; line-height: 1.25;
+      font-size: 10px; font-weight: 600; min-height: 64px; padding: 6px 2px 8px;
+      text-transform: uppercase; letter-spacing: 0.08em; line-height: 1.2;
+      display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+      gap: 2px; white-space: nowrap;
     }
     .tabs button.on { color: var(--ink); }
+    .tab-mark { height: 16px; display: flex; align-items: center; justify-content: center; }
     .badge {
       display: none;
-      min-width: 18px;
-      height: 18px;
-      margin-left: 4px;
-      padding: 0 5px;
-      border-radius: 9px;
+      min-width: 16px;
+      height: 16px;
+      margin: 0;
+      padding: 0 4px;
+      border-radius: 8px;
       background: var(--bell);
       color: var(--paper);
-      font-size: 11px;
-      line-height: 18px;
-      vertical-align: middle;
+      font-size: 10px;
+      line-height: 16px;
+      letter-spacing: 0;
+      text-transform: none;
     }
     .badge.on { display: inline-block; }
+    .undo {
+      min-height: 40px;
+      min-width: 108px;
+      padding: 8px 10px;
+      font-size: 11px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
     .strike .name { text-decoration: line-through; color: var(--quiet); }
     .row { padding: 16px 0; border-bottom: 1px solid var(--hairline); }
     .row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
@@ -118,7 +130,7 @@
           </div>
         </div>
       </div>
-      <p class="kicker">Where I start</p>
+      <p class="kicker">Begin here</p>
       <p class="lede" id="ai-status"></p>
       <h1 id="start-title">Let’s get this done now.</h1>
       <p class="lede" id="start-lede">Discipline beats motivation. Later can wait.</p>
@@ -132,7 +144,7 @@
     </section>
 
     <section class="screen" id="doing">
-      <p class="kicker">Where I start</p>
+      <p class="kicker">Begin here</p>
       <h1 id="doing-title"></h1>
       <p class="lede">Let’s get this off your plate. Check it off when you’re done.</p>
       <p class="act" id="doing-act"></p>
@@ -302,10 +314,10 @@
     </section>
 
     <nav class="tabs">
-      <button class="on" type="button" onclick="show('start')">Where I start</button>
-      <button type="button" onclick="show('plate')">On my plate <span class="badge" id="plate-badge"></span></button>
-      <button type="button" onclick="show('disciplined')">Pile it on</button>
-      <button type="button" onclick="show('results')">The Results</button>
+      <button class="on" type="button" onclick="show('start')"><span class="tab-mark"></span>Begin</button>
+      <button type="button" onclick="show('plate')"><span class="tab-mark"><span class="badge" id="plate-badge"></span></span>Plate</button>
+      <button type="button" onclick="show('disciplined')"><span class="tab-mark"></span>Pile</button>
+      <button type="button" onclick="show('results')"><span class="tab-mark"></span>Results</button>
     </nav>
   </div>
   <script>
@@ -393,7 +405,8 @@
         if (step) {
           item.action = step.replace(/^["']|["']$/g, "");
           persist();
-          drawStart();
+          pruneSpentOnce();
+    drawStart();
     checkPokes();
     setInterval(checkPokes, 20000);
         }
@@ -589,6 +602,17 @@
       else drawImport();
     }
     function keepImports() { keepOne(); }
+    function pruneSpentOnce() {
+      const stamp = todayStamp();
+      const keep = items.filter((i) => {
+        if (i.kind !== "once" || !i.doneOn) return true;
+        return sameDay(i.doneOn, stamp);
+      });
+      if (keep.length !== items.length) {
+        items = keep;
+        persist();
+      }
+    }
     function persist() {
       localStorage.setItem(KEY, JSON.stringify({ items, assignedId, log, train }));
     }
@@ -673,7 +697,8 @@
       persist();
       const cur = assigned();
       if (cur) writeFirstStep(cur);
-      drawStart();
+      pruneSpentOnce();
+    drawStart();
     checkPokes();
     setInterval(checkPokes, 20000);
     }
@@ -845,7 +870,7 @@
     function show(id) {
       document.querySelectorAll(".screen").forEach((s) => s.classList.remove("on"));
       document.getElementById(id).classList.add("on");
-      const map = { start: "Where I start", doing: "Where I start", plate: "On my plate", disciplined: "Pile it on", place: "Pile it on", import: "Pile it on", results: "The Results", settings: "The Results" };
+      const map = { start: "Begin", doing: "Begin", plate: "On my plate", disciplined: "Pile it on", place: "Pile it on", import: "Pile it on", results: "The Results", settings: "The Results" };
       document.querySelectorAll(".tabs button").forEach((t) => t.classList.toggle("on", t.textContent === map[id]));
       if (id === "start") drawStart();
       if (id === "plate") drawPlate();
@@ -1180,7 +1205,8 @@
       }
       document.getElementById("poke").classList.remove("on");
       assignFromPlate();
-      drawStart();
+      pruneSpentOnce();
+    drawStart();
     checkPokes();
     setInterval(checkPokes, 20000);
     }
@@ -1231,7 +1257,8 @@
     function assignNext() {
       const plate = plateItems().filter((i) => i.id !== assignedId && i.doneOn !== todayStamp());
       if (plate[0]) { assignedId = plate[0].id; persist(); }
-      drawStart();
+      pruneSpentOnce();
+    drawStart();
     checkPokes();
     setInterval(checkPokes, 20000);
     }
@@ -1278,7 +1305,7 @@
         box.innerHTML = '<p class="lede">Discipline beats motivation. Pile it on here.</p>';
         return;
       }
-      items.forEach((f) => {
+      items.filter((f) => !(f.kind === "once" && f.doneOn && !sameDay(f.doneOn, todayStamp()))).forEach((f) => {
         const row = document.createElement("div");
         row.className = "row";
         row.innerHTML = '<div class="row-top"><div class="name"></div><div class="row-actions"><button type="button" class="ghost" data-edit>Edit</button><button type="button" class="ghost" data-drop>Remove</button></div></div><div class="meta"></div>';
@@ -1313,7 +1340,8 @@
       assignFromPlate();
       drawDisc();
       drawPlate();
-      drawStart();
+      pruneSpentOnce();
+    drawStart();
     checkPokes();
     setInterval(checkPokes, 20000);
     }
@@ -1346,7 +1374,8 @@
           const b = document.createElement("button");
           b.type = "button";
           b.className = "ghost";
-          b.textContent = "My bad — send back";
+          b.textContent = "Undo";
+          b.className = "ghost undo";
           b.addEventListener("click", () => undoDone(e.id));
           row.querySelector(".row-top").appendChild(b);
         }
@@ -1378,6 +1407,7 @@
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
     assignFromPlate();
     updateBadge();
+    pruneSpentOnce();
     drawStart();
     checkPokes();
     setInterval(checkPokes, 20000);
