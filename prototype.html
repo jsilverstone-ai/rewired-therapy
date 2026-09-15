@@ -639,16 +639,28 @@
       else drawImport();
     }
     function keepImports() { keepOne(); }
+    function dayNum(s) {
+      const p = String(s || "").split("-").map(Number);
+      if (p.length < 3) return 0;
+      return p[0] * 10000 + p[1] * 100 + p[2];
+    }
     function pruneSpentOnce() {
       const stamp = todayStamp();
       const keep = items.filter((i) => {
         if (i.kind !== "once" || !i.doneOn) return true;
         return sameDay(i.doneOn, stamp);
       });
-      if (keep.length !== items.length) {
-        items = keep;
-        persist();
-      }
+      if (keep.length !== items.length) items = keep;
+      items.forEach((i) => {
+        if (i.kind !== "once" || i.doneOn) return;
+        const due = i.dueDate || dueFromWhen(i.when);
+        if (!due || dayNum(due) < dayNum(stamp)) {
+          i.dueDate = stamp;
+          i.ignoredOn = "";
+          i.pushedOn = stamp;
+        }
+      });
+      persist();
     }
     function persist() {
       localStorage.setItem(KEY, JSON.stringify({ items, assignedId, log, train }));
@@ -1446,7 +1458,7 @@
         row.innerHTML = '<div class="row-top"><div class="name"></div><div class="row-actions"><button type="button" class="ghost" data-edit>Edit</button><button type="button" class="ghost" data-drop>Remove</button></div></div><div class="meta"></div>';
         row.querySelector(".name").textContent = f.name;
         const kindLabel = ({once:"one time",daily:"daily",weekly:"weekly",monthly:"monthly","as-needed":"as needed"})[f.kind] || f.kind;
-        row.querySelector(".meta").textContent = kindLabel + (f.when ? " · " + f.when : "");
+        row.querySelector(".meta").textContent = kindLabel + (f.when ? " · " + f.when : "") + (sameDay(f.pushedOn, todayStamp()) ? " · pushed from yesterday" : "");
         row.querySelector("[data-drop]").addEventListener("click", () => dropItem(f.id));
         row.querySelector("[data-edit]").addEventListener("click", () => editItem(f.id));
         box.appendChild(row);
