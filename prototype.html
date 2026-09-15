@@ -1185,11 +1185,7 @@
     setInterval(checkPokes, 20000);
     }
     function drawStart() {
-      const cur0 = assigned();
-      const waiting = waitingPlate();
-      if (!cur0 || cur0.doneOn === todayStamp() || cur0.ignoredOn === todayStamp() || !waiting.some((i) => i.id === cur0.id)) {
-        assignFromPlate();
-      }
+      assignFromPlate();
       const f = assigned();
       const begin = document.getElementById("btn-begin");
       const next = document.getElementById("btn-next");
