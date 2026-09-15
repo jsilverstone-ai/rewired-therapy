@@ -267,15 +267,13 @@
         </div>
       </div>
       <div class="step" id="s-clock">
-        <p class="lede">Set a time. You can add more than one.</p>
-        <p class="lede" id="clock-list"></p>
-        <p class="lede">AM or PM</p>
+        <p class="lede">AM or PM, then type the time. 730 is 7:30.</p>
         <div class="choices" id="ampm-choices"></div>
-        <p class="lede">Hour</p>
-        <div class="scroll" id="hour-choices"></div>
-        <p class="lede">Minute</p>
-        <div class="scroll" id="min-choices"></div>
+        <input id="clock-type" type="tel" inputmode="numeric" placeholder="730" autocomplete="off" />
+        <p class="lede" id="clock-list"></p>
+        <div class="choices" id="clock-chips"></div>
         <div class="actions">
+          <button type="button" class="ghost" onclick="startClockVoice()">Speak the time</button>
           <button type="button" onclick="clockThenRemind()">Done</button>
         </div>
       </div>
@@ -836,38 +834,78 @@
       }
       finishPlace();
     }
+    function parseTypedClock(raw) {
+      const s = String(raw || "").replace(/[^0-9]/g, "");
+      if (!s) return null;
+      let h = 0, m = 0;
+      if (s.length <= 2) { h = parseInt(s, 10); m = 0; }
+      else if (s.length === 3) { h = parseInt(s[0], 10); m = parseInt(s.slice(1), 10); }
+      else { h = parseInt(s.slice(0, s.length - 2), 10); m = parseInt(s.slice(-2), 10); }
+      if (h < 1 || h > 12 || m > 59) return null;
+      return { hour: String(h), min: (m < 10 ? "0" : "") + m };
+    }
+    function applyClockType() {
+      const box = document.getElementById("clock-type");
+      const parsed = parseTypedClock(box && box.value);
+      if (parsed) { pendingHour = parsed.hour; pendingMin = parsed.min; }
+      const list = document.getElementById("clock-list");
+      if (list) list.textContent = pendingHour + ":" + pendingMin + " " + pendingAm;
+    }
     function showClockBuilder() {
       const am = document.getElementById("ampm-choices");
-      const hours = document.getElementById("hour-choices");
-      const mins = document.getElementById("min-choices");
       if (!am) return;
       am.innerHTML = "";
-      hours.innerHTML = "";
-      mins.innerHTML = "";
       ["AM","PM"].forEach((x) => {
         const b = document.createElement("button");
         b.type = "button"; b.className = "ghost" + (pendingAm === x ? " on" : "");
         b.textContent = x;
-        b.addEventListener("click", () => { pendingAm = x; showClockBuilder(); });
+        b.addEventListener("click", () => { pendingAm = x; applyClockType(); showClockBuilder(); });
         am.appendChild(b);
       });
-      for (let h = 1; h <= 12; h++) {
-        const b = document.createElement("button");
-        b.type = "button"; b.className = "pick" + (pendingHour === String(h) ? " on" : "");
-        b.textContent = String(h);
-        b.addEventListener("click", () => { pendingHour = String(h); showClockBuilder(); });
-        hours.appendChild(b);
+      const chips = document.getElementById("clock-chips");
+      if (chips) {
+        chips.innerHTML = "";
+        ["7:00","8:00","12:00","5:00","6:30"].forEach((label) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "ghost";
+          b.textContent = label + " " + pendingAm;
+          b.addEventListener("click", () => {
+            const p = parseTypedClock(label);
+            if (!p) return;
+            pendingHour = p.hour; pendingMin = p.min;
+            const box = document.getElementById("clock-type");
+            if (box) box.value = p.hour + p.min;
+            applyClockType();
+          });
+          chips.appendChild(b);
+        });
       }
-      ["00","05","10","15","20","25","30","35","40","45","50","55"].forEach((m) => {
-        const b = document.createElement("button");
-        b.type = "button"; b.className = "pick" + (pendingMin === m ? " on" : "");
-        b.textContent = m;
-        b.addEventListener("click", () => { pendingMin = m; showClockBuilder(); });
-        mins.appendChild(b);
-      });
-      document.getElementById("clock-list").textContent = pendingHour + ":" + pendingMin + " " + pendingAm;
+      const box = document.getElementById("clock-type");
+      if (box && !box.dataset.wired) {
+        box.dataset.wired = "1";
+        box.addEventListener("input", applyClockType);
+      }
+      applyClockType();
       document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
       document.getElementById("s-clock").classList.add("on");
+    }
+    function startClockVoice() {
+      const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Rec) return;
+      const rec = new Rec();
+      rec.lang = "en-US";
+      rec.onresult = (e) => {
+        const said = (e.results[0] && e.results[0][0] && e.results[0][0].transcript) || "";
+        if (/p\.?\s*m/i.test(said)) pendingAm = "PM";
+        if (/a\.?\s*m/i.test(said)) pendingAm = "AM";
+        const box = document.getElementById("clock-type");
+        const digits = said.replace(/[^0-9]/g, "");
+        if (box && digits) box.value = digits;
+        applyClockType();
+        showClockBuilder();
+      };
+      rec.start();
     }
     function paintRemind() {
       ["app","phone","text"].forEach((k) => {
@@ -876,6 +914,7 @@
       });
     }
     function clockThenRemind() {
+      applyClockType();
       const label = pendingHour + ":" + pendingMin + " " + pendingAm;
       pendingClocks = [label];
       if (!pendingRemind.length) pendingRemind = [];
