@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#F3EEE4" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <title>Rewired Therapy</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet" />
@@ -98,15 +99,16 @@
   <div class="app">
     <section class="screen on" id="start">
       <div class="poke" id="poke">
-        <p class="act" id="poke-copy"></p>
-        <div class="actions" style="padding-top:16px">
-          <button type="button" onclick="pokeHere()">I'm here</button>
-          <button type="button" class="ghost" onclick="markDone()">Complete</button>
-          <button type="button" class="quiet" onclick="ignoreToday()">Ignore for the day</button>
+        <p class="lede" id="poke-copy"></p>
+        <div id="poke-late" style="display:none">
+          <div class="choices">
+            <button type="button" class="ghost" onclick="markDone()">Complete</button>
+            <button type="button" class="quiet" onclick="ignoreToday()">Ignore today</button>
+          </div>
         </div>
       </div>
       <p class="kicker">Where I start</p>
-      <p class="lede" id="ai-status">Local model: checking…</p>
+      <p class="lede" id="ai-status"></p>
       <h1 id="start-title">Let’s get this done now.</h1>
       <p class="lede" id="start-lede">Discipline beats motivation. Later can wait.</p>
       <p class="act" id="start-act"></p>
@@ -145,6 +147,7 @@
       <div id="disc-rows"></div>
       <div class="actions">
         <button type="button" onclick="editingId=null;show('place')">Add to the list</button>
+        <button type="button" class="ghost" onclick="connectGoogle()">From calendar and email</button>
       </div>
     </section>
 
@@ -175,12 +178,24 @@
         <p class="act" id="kind-echo"></p>
         <p class="lede" id="kind-guess">One time, or all the time?</p>
         <div class="choices">
-          <button type="button" class="ghost" onclick="needThenRemind('once','')">One time</button>
+          <button type="button" class="ghost" onclick="stepOnceDate()">One time</button>
           <button type="button" class="ghost" onclick="stepHow()">All the time</button>
         </div>
       </div>
+      <div class="step" id="s-date">
+        <p class="lede">When is this?</p>
+        <div class="choices">
+          <button type="button" class="ghost" onclick="setOnceDate('today')">Today</button>
+          <button type="button" class="ghost" onclick="setOnceDate('tomorrow')">Tomorrow</button>
+        </div>
+        <p class="lede">Or another day</p>
+        <input id="once-date" type="date" />
+        <div class="actions">
+          <button type="button" onclick="setOncePicked()">Use that date</button>
+        </div>
+      </div>
       <div class="step" id="s-how">
-        <p class="lede">How often?</p>
+        <p class="lede">Daily = pick days. Weekly = all week. Monthly = pick dates.</p>
         <div class="choices">
           <button type="button" class="ghost" onclick="stepScroll('daily')">Daily</button>
           <button type="button" class="ghost" onclick="stepScroll('weekly')">Weekly</button>
@@ -228,6 +243,18 @@
       </div>
     </section>
 
+    <section class="screen" id="import">
+      <p class="kicker">From Google</p>
+      <h1 id="import-title">Keep or ignore.</h1>
+      <p class="lede" id="import-lede">One at a time. Keep files it. Ignore throws it out.</p>
+      <p class="act" id="import-name"></p>
+      <p class="lede" id="import-meta"></p>
+      <div class="actions" id="import-actions">
+        <button type="button" onclick="keepOne()">Keep</button>
+        <button type="button" class="ghost" onclick="ignoreOne()">Ignore</button>
+        <button type="button" class="quiet" onclick="show('disciplined')">Stop</button>
+      </div>
+    </section>
     <section class="screen" id="settings">
       <p class="kicker">Away from the office</p>
       <h1>Cloud model</h1>
@@ -240,15 +267,21 @@
       <p class="lede" id="provider-now"></p>
       <input id="api-key" type="text" placeholder="paste API key" autocomplete="off" autocapitalize="off" spellcheck="false" />
       <p class="lede" id="key-saved"></p>
+      <div class="rule"></div>
+      <p class="lede">Google Client ID (Calendar + email)</p>
+      <input id="google-client" type="text" placeholder="xxxxx.apps.googleusercontent.com" autocomplete="off" autocapitalize="off" spellcheck="false" />
+      <p class="lede" id="google-saved"></p>
       <div class="actions">
         <button type="button" onclick="saveKey()">Save key</button>
+        <button type="button" class="ghost" onclick="saveGoogle()">Save Google ID</button>
+        <button type="button" onclick="connectGoogle()">Connect Google</button>
         <button type="button" class="quiet" onclick="show('start')">Back</button>
       </div>
     </section>
     <section class="screen" id="results">
       <p class="kicker">The Results</p>
-      <h1>What got a beginning</h1>
-      <p class="lede">This is what the next assignment learns from. No score.</p>
+      <h1>Take a look.</h1>
+      <p class="lede">See how discipline paid off. It’s time to celebrate.</p>
       <div class="rule"></div>
       <div id="result-rows"></div>
       <div class="actions">
@@ -344,7 +377,11 @@
     function drawSettings() {
       const cfg = cloudCfg();
       const el = document.getElementById("provider-now");
-      if (el) el.textContent = "Using " + (cfg.provider || "groq") + (cfg.key ? " · key saved on this phone" : " · no key yet");
+      if (el) el.textContent = "Using " + (cfg.provider || "groq") + (cfg.key ? " · key saved on this device" : " · no key yet");
+      const box = document.getElementById("api-key");
+      if (box && cfg.key) box.value = cfg.key;
+      const g = document.getElementById("google-client");
+      if (g && cfg.googleClient) g.value = cfg.googleClient;
     }
     async function writeFirstStep(item) {
       if (!item) return;
@@ -371,6 +408,174 @@
       persist();
     }
 
+
+    let googleToken = "";
+    let importDraft = [];
+    function googleClientId() {
+      return (cloudCfg().googleClient || "").trim();
+    }
+    function saveGoogle() {
+      const cfg = cloudCfg();
+      cfg.googleClient = (document.getElementById("google-client").value || "").trim();
+      localStorage.setItem("rewired-cloud", JSON.stringify(cfg));
+      const n = document.getElementById("google-saved");
+      if (n) n.textContent = cfg.googleClient ? "Google ID saved on this device." : "Paste the Client ID first.";
+    }
+    function connectGoogle() {
+      const id = googleClientId();
+      if (!id) { show("settings"); const n = document.getElementById("google-saved"); if (n) n.textContent = "Paste your Google Client ID, save, then connect."; return; }
+      if (!window.google || !google.accounts || !google.accounts.oauth2) {
+        alert("Google sign-in script did not load. Use https or localhost, then refresh.");
+        return;
+      }
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: id,
+        scope: "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly",
+        callback: (resp) => {
+          if (!resp || !resp.access_token) return;
+          googleToken = resp.access_token;
+          pullGoogle();
+        }
+      });
+      client.requestAccessToken();
+    }
+    async function gfetch(url) {
+      const res = await fetch(url, { headers: { Authorization: "Bearer " + googleToken } });
+      if (!res.ok) throw new Error("google " + res.status);
+      return res.json();
+    }
+    async function pullGoogle() {
+      importDraft = [];
+      const now = new Date();
+      const later = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
+      const earlier = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+      try {
+        const cal = await gfetch("https://www.googleapis.com/calendar/v3/calendars/primary/events?singleEvents=true&orderBy=startTime&timeMin=" + encodeURIComponent(earlier.toISOString()) + "&timeMax=" + encodeURIComponent(later.toISOString()) + "&maxResults=40");
+        (cal.items || []).forEach((ev) => {
+          const start = ev.start && (ev.start.dateTime || ev.start.date) || "";
+          const dt = start ? new Date(start) : null;
+          let due = "";
+          let clock = "";
+          if (dt && !isNaN(dt.getTime())) {
+            due = dt.getFullYear() + "-" + pad2(dt.getMonth()+1) + "-" + pad2(dt.getDate());
+            let h = dt.getHours();
+            const min = pad2(dt.getMinutes());
+            const ap = h >= 12 ? "PM" : "AM";
+            h = h % 12; if (h === 0) h = 12;
+            clock = h + ":" + min + " " + ap;
+          }
+          importDraft.push({
+            source: "calendar",
+            name: ev.summary || "Calendar event",
+            kind: ev.recurrence ? "weekly" : "once",
+            when: dt && !isNaN(dt.getTime()) ? dt.toLocaleString() : "",
+            start: start,
+            dueDate: due,
+            clocks: clock ? [clock] : [],
+            keep: true
+          });
+        });
+      } catch (e) {}
+      try {
+        const mail = await gfetch("https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=25&q=" + encodeURIComponent("newer_than:30d (bill OR invoice OR appointment OR reservation OR due OR statement)"));
+        const ids = (mail.messages || []).slice(0, 20);
+        for (const m of ids) {
+          const full = await gfetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/" + m.id + "?format=full&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date");
+          const headers = ((full.payload || {}).headers || []);
+          const sub = (headers.find((h) => h.name === "Subject") || {}).value || "Email";
+          const dateHdr = (headers.find((h) => h.name === "Date") || {}).value || "";
+          const snippet = full.snippet || "";
+          const parsed = parseMailWhen(sub + " " + snippet + " " + dateHdr);
+          importDraft.push({
+            source: "email",
+            name: sub,
+            kind: "once",
+            when: parsed.when || "email",
+            dueDate: parsed.dueDate || "",
+            clocks: parsed.clocks || [],
+            keep: false
+          });
+        }
+      } catch (e) {}
+      drawImport();
+      show("import");
+    }
+    function parseMailWhen(text) {
+      const out = { when: "", dueDate: "", clocks: [] };
+      const raw = String(text || "");
+      const tm = raw.match(/\b(\d{1,2}):(\d{2})\s*(a\.?m\.?|p\.?m\.?|AM|PM)\b/i);
+      if (tm) {
+        const ap = /p/i.test(tm[3]) ? "PM" : "AM";
+        out.clocks = [parseInt(tm[1], 10) + ":" + tm[2] + " " + ap];
+      }
+      const dt = raw.match(/\b((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:,?\s+\d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/i);
+      if (dt) {
+        const d = new Date(dt[1]);
+        if (!isNaN(d.getTime()) && d.getFullYear() >= 2020) {
+          out.dueDate = d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+        }
+      }
+      if (!out.dueDate) {
+        const sent = raw.match(/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}/i);
+        if (sent) {
+          const d = new Date(sent[0]);
+          if (!isNaN(d.getTime())) out.dueDate = d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+        }
+      }
+      out.when = [out.dueDate, (out.clocks[0] || "")].filter(Boolean).join(" · ") || "";
+      return out;
+    }
+    function drawImport() {
+      const title = document.getElementById("import-title");
+      const lede = document.getElementById("import-lede");
+      const name = document.getElementById("import-name");
+      const meta = document.getElementById("import-meta");
+      const acts = document.getElementById("import-actions");
+      if (!importDraft.length) {
+        if (title) title.textContent = "That’s the pile.";
+        if (lede) lede.textContent = "Nothing left to sort.";
+        if (name) name.textContent = "";
+        if (meta) meta.textContent = "";
+        if (acts) acts.style.display = "none";
+        return;
+      }
+      const row = importDraft[0];
+      const left = importDraft.length;
+      if (title) title.textContent = "Keep or ignore.";
+      if (lede) lede.textContent = left + " left. Keep files it now. Ignore throws it out.";
+      if (name) name.textContent = row.name + ".";
+      if (meta) meta.textContent = [row.source, row.when].filter(Boolean).join(" · ");
+      if (acts) acts.style.display = "";
+    }
+    function fileImportRow(r) {
+      items.push({
+        id: uid(),
+        name: r.name,
+        kind: r.kind || "once",
+        anchors: [],
+        clocks: r.clocks || [],
+        when: r.when || "",
+        dueDate: r.dueDate || "",
+        action: "Open it. Do the first physical step.",
+        doneOn: "",
+        remind: ["app"]
+      });
+      persist();
+      assignFromPlate();
+    }
+    function keepOne() {
+      if (!importDraft.length) return show("disciplined");
+      fileImportRow(importDraft.shift());
+      if (!importDraft.length) show("disciplined");
+      else drawImport();
+    }
+    function ignoreOne() {
+      if (!importDraft.length) return show("disciplined");
+      importDraft.shift();
+      if (!importDraft.length) show("disciplined");
+      else drawImport();
+    }
+    function keepImports() { keepOne(); }
     function persist() {
       localStorage.setItem(KEY, JSON.stringify({ items, assignedId, log, train }));
     }
@@ -388,17 +593,28 @@
       if (h >= 17 && h < 21) return "Evening";
       return "Night";
     }
+    function pad2(n) { return (n < 10 ? "0" : "") + n; }
     function todayStamp() {
       const d = new Date();
-      return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
+      return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+    }
+    function addDays(n) {
+      const d = new Date();
+      d.setDate(d.getDate() + n);
+      return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
     }
     function onPlateToday(item) {
       const stamp = todayStamp();
       const d = new Date();
       const anchors = item.anchors || (item.anchor ? [item.anchor] : []);
-      if (item.kind === "once") return item.doneOn !== stamp;
-      if (item.kind === "daily") return item.doneOn !== stamp;
-      if (item.kind === "weekly") return item.doneOn !== stamp && anchors.includes(WEEKDAYS[d.getDay()]);
+      if (item.kind === "once") {
+        if (item.doneOn && sameDay(item.doneOn, stamp)) return false;
+        const due = item.dueDate || dueFromWhen(item.when);
+        if (!due) return true;
+        return sameDay(due, stamp);
+      }
+      if (item.kind === "daily") return item.doneOn !== stamp && (anchors.length ? anchors.includes(WEEKDAYS[d.getDay()]) : true);
+      if (item.kind === "weekly") return item.doneOn !== stamp;
       if (item.kind === "monthly") {
         if (item.doneOn === stamp) return false;
         return anchors.includes(String(d.getDate())) || anchors.includes(d.getDate() + "");
@@ -444,6 +660,21 @@
     checkPokes();
     setInterval(checkPokes, 20000);
     }
+    function dueFromWhen(when) {
+      if (!when || /[·]|Monday|Tuesday|weekly|daily/i.test(when)) return "";
+      const d = new Date(when);
+      if (isNaN(d.getTime())) return "";
+      if (d.getFullYear() < 2020) return "";
+      return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+    }
+    function sameDay(a, b) {
+      const n = (s) => {
+        const p = String(s || "").split("-").map(Number);
+        if (p.length < 3) return "";
+        return p[0] + "-" + pad2(p[1]) + "-" + pad2(p[2]);
+      };
+      return n(a) && n(a) === n(b);
+    }
     function parseClock(label) {
       const s = String(label || "");
       const m = s.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
@@ -474,8 +705,9 @@
       const list = chronoPlate();
       if (!list.length) return null;
       const now = nowMinutes();
-      const due = list.find((i) => itemMinutes(i) <= now);
-      return due || list[0];
+      const arrived = list.filter((i) => itemMinutes(i) <= now);
+      if (arrived.length) return arrived[0];
+      return list[0];
     }
     function avgResponse() {
       const rows = train.filter((e) => typeof e.responseMin === "number");
@@ -493,7 +725,7 @@
     }
     function assigned() { return items.find((i) => i.id === assignedId) || null; }
     function waitingCount() {
-      return plateItems().filter((i) => i.doneOn !== todayStamp()).length;
+      return waitingPlate().length;
     }
     function updateBadge() {
       const b = document.getElementById("plate-badge");
@@ -593,7 +825,7 @@
     function show(id) {
       document.querySelectorAll(".screen").forEach((s) => s.classList.remove("on"));
       document.getElementById(id).classList.add("on");
-      const map = { start: "Where I start", doing: "Where I start", plate: "On my plate", disciplined: "Pile it on", place: "Pile it on", results: "The Results", settings: "The Results" };
+      const map = { start: "Where I start", doing: "Where I start", plate: "On my plate", disciplined: "Pile it on", place: "Pile it on", import: "Pile it on", results: "The Results", settings: "The Results" };
       document.querySelectorAll(".tabs button").forEach((t) => t.classList.toggle("on", t.textContent === map[id]));
       if (id === "start") drawStart();
       if (id === "plate") drawPlate();
@@ -722,7 +954,8 @@
     function stepScroll(kind) {
       pendingKind = kind;
       pendingAnchors = [];
-      if (kind === "daily") {
+      if (kind === "weekly") {
+        pendingAnchors = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
         showClockBuilder();
         return;
       }
@@ -730,9 +963,6 @@
       box.innerHTML = "";
       let opts = [];
       if (kind === "daily") {
-        document.getElementById("when-ask").textContent = "Which times of day?";
-        opts = ["Morning","Noon","Afternoon","Evening","Night"];
-      } else if (kind === "weekly") {
         document.getElementById("when-ask").textContent = "Which days?";
         opts = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
       } else {
@@ -760,6 +990,23 @@
       document.getElementById("s-when").classList.add("on");
     }
     function confirmScroll() {
+      showClockBuilder();
+    }
+
+    let pendingDue = "";
+    function stepOnceDate() {
+      pendingKind = "once";
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-date").classList.add("on");
+    }
+    function setOnceDate(which) {
+      pendingDue = which === "tomorrow" ? addDays(1) : todayStamp();
+      showClockBuilder();
+    }
+    function setOncePicked() {
+      const v = document.getElementById("once-date").value;
+      if (!v) return;
+      pendingDue = v;
       showClockBuilder();
     }
     function needThenRemind(kind, needed) {
@@ -810,6 +1057,7 @@
         clocks: pendingClocks.slice(),
         asNeeded: pendingNeeded,
         remind: pendingRemind,
+        dueDate: pendingKind === "once" ? (pendingDue || todayStamp()) : "",
         when: whenBits.join(" · "),
         action: window._autoStep || "Dopamine is on the other side of done. How good will that feel?",
         doneOn: ""
@@ -861,19 +1109,22 @@
         const klate = pokeKey(item, "late");
         if (now >= t - 30 && now < t - 5 && !state[k30]) {
           activePoke = { item: item, kind: "30", key: k30 };
-          copy.textContent = "In about 30 minutes: " + item.name + ".";
+          copy.textContent = "In 30 min: " + item.name;
+          document.getElementById("poke-late").style.display = "none";
           box.classList.add("on");
           return;
         }
         if (now >= t - 5 && now < t && !state[k5]) {
           activePoke = { item: item, kind: "5", key: k5 };
-          copy.textContent = "Five minutes. " + item.name + " is next.";
+          copy.textContent = "In 5 min: " + item.name;
+          document.getElementById("poke-late").style.display = "none";
           box.classList.add("on");
           return;
         }
         if (now >= t + 5 && !state[klate] && item.doneOn !== todayStamp()) {
           activePoke = { item: item, kind: "late", key: klate };
-          copy.textContent = item.name + " started five minutes ago. Complete it, or ignore it for today.";
+          copy.textContent = item.name + " — still waiting.";
+          document.getElementById("poke-late").style.display = "";
           box.classList.add("on");
           return;
         }
@@ -941,10 +1192,7 @@
       const upcoming = line[idx + 1];
       const done = lastDoneName();
       const avg = avgResponse();
-      let lede = "This is next.";
-      if (upcoming) lede = "After this: " + upcoming.name + ".";
-      if (done) lede += " You already began " + done + ".";
-      if (avg !== null) lede += " You usually answer in about " + avg + " min.";
+      let lede = upcoming ? ("Next after this: " + upcoming.name) : "This is next.";
       document.getElementById("start-title").textContent = f.name + ".";
       document.getElementById("start-lede").textContent = lede;
       document.getElementById("start-act").textContent = f.action || "Don’t wait for urgency. Let’s just do it.";
@@ -982,7 +1230,7 @@
 
     function drawPlate() {
       const box = document.getElementById("plate-rows");
-      const rows = chronoPlate().concat(plateItems().filter((i) => i.doneOn === todayStamp()));
+      const rows = chronoPlate().concat(plateItems().filter((i) => sameDay(i.doneOn, todayStamp())));
       box.innerHTML = "";
       if (!rows.length) {
         box.innerHTML = '<p class="lede">Nothing on the plate yet. Pile something on, and it will show up here.</p>';
@@ -1031,7 +1279,7 @@
       document.getElementById("kind-echo").textContent = f.name + ".";
       show("place");
       document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
-      document.getElementById("s-kind").classList.add("on");
+      document.getElementById("s-name").classList.add("on");
     }
     function dropItem(id) {
       items = items.filter((x) => x.id !== id);
@@ -1056,23 +1304,45 @@
         const onPlate = onPlateToday(f) || done;
         if (!onPlate && !done) return;
         seen.add(key);
-        rows.push({ name: f.name, done: done });
+        rows.push({ id: f.id, name: f.name, done: done });
       });
       box.innerHTML = "";
       if (!rows.length) {
-        box.innerHTML = '<p class="lede">No results yet. Begin one assigned thing.</p>';
+        box.innerHTML = '<p class="lede">Nothing to celebrate yet. Begin one assigned thing.</p>';
         return;
       }
       rows.forEach((e) => {
         const row = document.createElement("div");
         row.className = "row" + (e.done ? " strike" : "");
-        row.innerHTML = '<div class="name"></div><div class="meta"></div>';
+        row.innerHTML = '<div class="row-top"><div class="name"></div></div><div class="meta"></div>';
         row.querySelector(".name").textContent = e.name;
         row.querySelector(".meta").textContent = e.done ? "Done" : "Still on the plate";
+        if (e.done) {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "ghost";
+          b.textContent = "My bad — send back";
+          b.addEventListener("click", () => undoDone(e.id));
+          row.querySelector(".row-top").appendChild(b);
+        }
         box.appendChild(row);
       });
     }
 
+    function undoDone(id) {
+      const f = items.find((x) => x.id === id);
+      if (!f) return;
+      f.doneOn = "";
+      f.ignoredOn = "";
+      log = log.filter((e) => !(e.name === f.name && (e.day === todayStamp() || (e.at || "").slice(0,10) === new Date().toISOString().slice(0,10))));
+      rememberOutcome(f, "undone");
+      assignedId = f.id;
+      persist();
+      assignFromPlate();
+      assignedId = f.id;
+      persist();
+      show("start");
+    }
     function downloadTrain() {
       const blob = new Blob([JSON.stringify({ train, log }, null, 2)], { type: "application/json" });
       const a = document.createElement("a");
