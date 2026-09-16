@@ -723,7 +723,7 @@
       if (title) title.textContent = "Keep or ignore.";
       if (lede) lede.textContent = left + " left. Keep files it now. Ignore throws it out.";
       if (name) name.textContent = row.name + ".";
-      if (meta) meta.textContent = [row.source, row.when].filter(Boolean).join(" · ");
+      if (meta) meta.textContent = [row.source, prettyDate(row.dueDate || row.when), (row.clocks && row.clocks[0]) || ""].filter(Boolean).join(" · ");
       if (acts) acts.style.display = "";
     }
     function fileImportRow(r) {
@@ -948,6 +948,26 @@
       const days = weekdaysFrom(item.when);
       if (item.kind === "once" && days.length === 1) return stampForWeekday(WEEKDAYS.indexOf(days[0]));
       return resolveDue(item) || dueFromWhen(item.when);
+    }
+    function prettyDate(stamp) {
+      const s = String(stamp || "");
+      const iso = s.match(/\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/);
+      if (iso) return parseInt(iso[2], 10) + "/" + parseInt(iso[3], 10) + "/" + iso[1];
+      const loose = parseLooseDate(s);
+      if (loose) {
+        const p = loose.split("-");
+        return parseInt(p[1], 10) + "/" + parseInt(p[2], 10) + "/" + p[0];
+      }
+      return s;
+    }
+    function prettyWhen(item) {
+      if (!item) return "";
+      if (item.kind === "once") {
+        const due = inferDue(item) || item.dueDate || "";
+        const clock = (item.clocks && item.clocks[0]) || "";
+        return [prettyDate(due), clock].filter(Boolean).join(" · ");
+      }
+      return item.when || "";
     }
     function sameDay(a, b) {
       const n = (s) => {
@@ -1947,7 +1967,7 @@
         const status = f.doneOn === todayStamp() ? "begun" : "waiting";
         row.innerHTML = '<div class="name"></div><div class="meta"></div>';
         row.querySelector(".name").textContent = f.name;
-        row.querySelector(".meta").textContent = (f.when || "today") + " · " + status;
+        row.querySelector(".meta").textContent = (prettyWhen(f) || f.when || "today") + " · " + status;
         box.appendChild(row);
       });
     }
@@ -1964,7 +1984,7 @@
         row.innerHTML = '<div class="row-top"><div class="name"></div><div class="row-actions"><button type="button" class="ghost" data-edit>Edit</button><button type="button" class="ghost" data-drop>Remove</button></div></div><div class="meta"></div>';
         row.querySelector(".name").textContent = f.name;
         const kindLabel = ({once:"one time",daily:"daily",weekly:"weekly",monthly:"monthly","as-needed":"as needed"})[f.kind] || f.kind;
-        row.querySelector(".meta").textContent = kindLabel + (f.when ? " · " + f.when : "") + (sameDay(f.pushedOn, todayStamp()) ? " · pushed from yesterday" : "");
+        row.querySelector(".meta").textContent = kindLabel + ((prettyWhen(f) || f.when) ? " · " + (prettyWhen(f) || f.when) : "") + (sameDay(f.pushedOn, todayStamp()) ? " · pushed from yesterday" : "");
         row.querySelector("[data-drop]").addEventListener("click", () => dropItem(f.id));
         row.querySelector("[data-edit]").addEventListener("click", () => editItem(f.id));
         box.appendChild(row);
