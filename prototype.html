@@ -2145,6 +2145,34 @@
     setInterval(checkPokes, 20000);
     pingAI().then((on) => { if (on) assignWithAI(); });
     setTimeout(askMissingAhead, 400);
+    (function swipeTabs() {
+      const order = ["start", "plate", "disciplined", "results"];
+      let x0 = 0, y0 = 0, t0 = 0;
+      const app = document.querySelector(".app");
+      if (!app) return;
+      app.addEventListener("touchstart", (e) => {
+        if (!e.touches || !e.touches[0]) return;
+        const tag = (e.target && e.target.tagName) || "";
+        if (/INPUT|TEXTAREA|SELECT|BUTTON/.test(tag)) { x0 = 0; return; }
+        x0 = e.touches[0].clientX;
+        y0 = e.touches[0].clientY;
+        t0 = Date.now();
+      }, { passive: true });
+      app.addEventListener("touchend", (e) => {
+        if (!x0 || !e.changedTouches || !e.changedTouches[0]) return;
+        const dx = e.changedTouches[0].clientX - x0;
+        const dy = e.changedTouches[0].clientY - y0;
+        x0 = 0;
+        if (Date.now() - t0 > 600) return;
+        if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+        const on = document.querySelector(".screen.on");
+        const id = on && on.id;
+        const i = order.indexOf(id);
+        if (i < 0) return;
+        const next = dx < 0 ? order[i + 1] : order[i - 1];
+        if (next) show(next);
+      }, { passive: true });
+    })();
   </script>
 </body>
 </html>
