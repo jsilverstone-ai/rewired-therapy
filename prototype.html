@@ -1,0 +1,2099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#2F3E4E" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <title>Rewired Therapy</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --paper: #F3F0EA; --paper-2: #E7E0D6; --ink: #2F3E4E; --quiet: #5C6B7A;
+      --hairline: #D5CFC4; --bell: #C07A5A; --good: #3F5A45;
+      --sans: "Lexend", "Segoe UI", sans-serif;
+      --serif: "Lexend", "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { background: var(--paper); color: var(--ink); font-family: var(--sans); font-size: 17px; line-height: 1.55; letter-spacing: 0.01em; }
+    .app { max-width: 430px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+    .screen { display: none; flex-direction: column; flex: 1; padding: 28px 24px 24px; }
+    .screen.on { display: flex; }
+    .kicker { color: var(--quiet); font-size: 12px; margin-bottom: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+    h1 { font-family: var(--serif); font-size: 30px; font-weight: 500; line-height: 1.2; letter-spacing: 0; }
+    .lede { color: var(--quiet); margin-top: 12px; }
+    .act { font-family: var(--serif); font-size: 20px; margin-top: 24px; line-height: 1.4; }
+    .rule { height: 1px; background: var(--hairline); margin: 24px 0; }
+    .actions { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding-top: 28px; }
+    button {
+      font-family: var(--sans); font-size: 14px; font-weight: 500; border: 1px solid var(--ink);
+      background: var(--ink); color: var(--paper); border-radius: 4px;
+      padding: 14px 16px; min-height: 52px; cursor: pointer;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    button.ghost { background: transparent; color: var(--ink); }
+    button.quiet { background: transparent; border-color: transparent; color: var(--quiet); min-height: 48px; }
+    #ampm-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    #ampm-choices button { width: 100%; }
+    #clock-type {
+      width: 100%;
+      min-height: 52px;
+      margin: 8px 0 0;
+      padding: 14px 16px;
+      border: 1px solid var(--ink);
+      border-radius: 4px;
+      background: transparent;
+      font-family: var(--sans);
+      font-size: 20px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-align: center;
+      color: var(--ink);
+      outline: none;
+    }
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      border-top: 1px solid var(--hairline);
+      padding: 10px 6px 22px;
+      gap: 0;
+    }
+    .tabs button {
+      flex: none; width: 100%; border: 0; background: none; color: var(--quiet);
+      font-size: 10px; font-weight: 600; min-height: 72px; padding: 10px 2px 10px;
+      text-transform: uppercase; letter-spacing: 0.08em; line-height: 1.15;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 6px; white-space: nowrap; position: relative; overflow: visible;
+    }
+    .tabs button.on { color: var(--ink); }
+    .tab-mark { position: absolute; top: 6px; left: 50%; margin-left: 8px; height: 16px; z-index: 1; }
+    .badge {
+      display: none;
+      min-width: 16px;
+      height: 16px;
+      margin: 0;
+      padding: 0 4px;
+      border-radius: 8px;
+      background: var(--bell);
+      color: var(--paper);
+      font-size: 10px;
+      line-height: 16px;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .badge.on { display: inline-block; }
+    .meter-wrap { margin-top: 20px; }
+    .meter-label { color: var(--quiet); font-size: 13px; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .meter {
+      height: 10px;
+      background: var(--paper-2);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .meter > span {
+      display: block;
+      height: 100%;
+      background: var(--bell);
+      width: 0;
+    }
+    .undo {
+      min-height: 40px;
+      min-width: 108px;
+      padding: 8px 10px;
+      font-size: 11px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .strike .name { text-decoration: line-through; color: var(--quiet); }
+    .row { padding: 16px 0; border-bottom: 1px solid var(--hairline); }
+    .row-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+    .row-actions { display: flex; gap: 24px; flex-shrink: 0; padding-top: 2px; }
+    .row-actions button {
+      min-height: 40px;
+      padding: 8px 12px;
+      font-size: 14px;
+    }
+    .row .name { font-family: var(--serif); font-size: 20px; }
+    .row .meta { color: var(--quiet); font-size: 14px; margin-top: 4px; }
+    input[type="text"], input[type="password"], input#api-key {
+      width: 100%; border: 0; border-bottom: 1px solid var(--ink); background: transparent;
+      padding: 12px 0; font-family: var(--serif); font-size: 18px; color: var(--ink); outline: none;
+      margin: 16px 0 8px;
+    }
+    .choices { display: flex; flex-direction: column; gap: 8px; margin-top: 20px; }
+
+    .scroll {
+      max-height: 240px;
+      overflow-y: auto;
+      border-top: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
+      margin-top: 16px;
+    }
+    .pick {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      color: var(--ink);
+      border: 0;
+      border-bottom: 1px solid var(--hairline);
+      border-radius: 0;
+      min-height: 48px;
+    }
+    .pick.on, button.ghost.on { background: var(--paper-2); }
+    .step { display: none; } .step.on { display: block; }
+    .poke { display: none; padding: 8px 0 8px; }
+    .poke.on { display: flex; justify-content: center; }
+    .bubble {
+      max-width: 80%;
+      background: #EFE8DE;
+      color: var(--bell);
+      border-radius: 22px;
+      padding: 16px 22px;
+      font-size: 18px;
+      font-weight: 500;
+      text-align: center;
+      line-height: 1.35;
+      position: relative;
+    }
+    #poke-ahead { margin: 12px 0 20px; }
+    #poke-ahead .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    #poke-ahead button {
+      background: transparent;
+      color: var(--bell);
+      border: 1px solid var(--bell);
+    }
+    .bubble:after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -8px;
+      margin-left: -8px;
+      border: 8px solid transparent;
+      border-top-color: #EFE8DE;
+      border-bottom: 0;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 16px;
+    }
+    .topbar .kicker { margin-bottom: 0; }
+    .topbar .lede { margin-top: 0; font-size: 13px; }
+
+    .chrome {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px 0;
+    }
+    .chrome.hide { display: none; }
+    .agent-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 0;
+      color: var(--bell);
+      min-height: 36px;
+      padding: 0;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .agent-btn img { width: 36px; height: 36px; object-fit: contain; display: block; }
+    .agent-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 8px 0 16px; }
+    .msg { max-width: 85%; padding: 12px 14px; border-radius: 16px; font-size: 16px; line-height: 1.4; }
+    .msg.bot { align-self: flex-start; background: #EFE8DE; color: var(--ink); }
+    .msg.me { align-self: flex-end; background: var(--bell); color: var(--paper); }
+    .agent-offer { border: 1px solid var(--bell); border-radius: 8px; padding: 12px; color: var(--bell); }
+    .agent-compose { display: flex; gap: 8px; align-items: center; padding-top: 8px; }
+    .agent-compose input {
+      flex: 1; margin: 0; font-size: 16px; min-height: 48px;
+    }
+    .agent-compose button { min-height: 48px; padding: 8px 12px; font-size: 11px; }
+    .agent-compose button.ghost { color: var(--bell); border-color: var(--bell); }
+    .tab-ico { width: 36px; height: 36px; min-width: 36px; min-height: 36px; object-fit: contain; display: block; }
+    .tabs button .tab-ico { margin: 0; flex: none; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="chrome" id="chrome">
+      <p class="kicker" id="chrome-left">Begin here</p>
+      <button type="button" class="agent-btn" onclick="window._agentBack=document.querySelector('.screen.on').id;show('agent')"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAOoElEQVR4nO3d6a3dNhCAUSZIQa7DJaRAl5A60pHzIxGecq2FEmef7wAGvN13JYoz4iZqDAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADifvM+AMj48f3bz+33f/71N9cVU6goCe2DfRZJAUeoFEm8CfozJANsqAjBSQb+EZJBb1z8wGaC/yqAnyYPkkE/XPCArgJ3JUhnE4JGImCQMiYuRDBnQSodNKuti5WfK/VdWEehB2IV/DPfOXMcWuMTJAM7FHQQHsE/8/2eSAT6KOAgjgLQKwAiJQOSgC4KN4BIwb9Z6RpIf6d3WVRGwTqLFPweQT97DCQBHRSqs88Kb13RPacGr0RKjJVRoI48gj/T4iDv5Pgp2vFISH8CmWlUKIkBvEgV2zPotNZKRPKH9wF0Felukr0SS4o0A2KBC+9EMwHcVeJsAW+RLJ/c7Ssta6YF4EC7QmevlJa0nrvI4nfvAwDuaC1BPptp2H5JfEd0tADQQrVukRRaAMYiDf51QfCfowWA0rr38e/QAjDE3f896b0J3pZ9tWlCEgBSugtEi2RbIYGTAFDOUfBXmruXxBiAEZr/+lYfINo+3+na0AJAGk93QN7//+33Rz/jx/dvP2f69tX6/2PQAnDR6Q5j4e0jzSsthirXkARgoOKdI4KVUf6nXbKq15AuANpZHY+pcvcfgxaAuUqVJ5u3Tf6qd/8xaAGoq1x5InnThH8T/NUSOC0ApCfd3z/6zOznsqEFgFQ+g/AoKPd/92awr0vwj0ELQFX15mM0d9N8Z+XfuZtGCwCpzC7plU6+VZMELQAj3P3tPA3+mZZB1etHC0BJ1TuGp5mAlLrzd7l+JAAjXSpUJFLBX/XuPwYJwNTsQyd4R6LJ3in4x+C9AGo6vFXG0l1wrwZ/p6m/PQYBFdxtSHH0/zpUNi0rrarubyMmARg5SwKbjptRSJB+qq9b+ZMAlB1tSjGTCI4+j2t3XYOnn+2ABCDsad//yeaWXSvp3lnZUTbvkAAEvemLzrQKzn5+50r/9M7O7MsxEsACyUr1pFVw9f8qJgWJfvub8u2gXGXR9LTiSASjVGXNnBg+m/pvm/7dR/yPtD3xWSsB6PUe+xXWwbB6Piuj/p0Df9O+AI68vdN79tE7NmvfPt5L4H9hDGAn85TRyhRYRm/69BGvmzcKZMgt280ySp8lMUiN4Ee9DhG0LhjppmKWBLDCYyD06fdWLHctLQtKq4/YZVrOA818He0KS3tUmKkmeVeJlVH+Na0KyCo4qZSyrub9eex6TZuCsW6eMxUl425cxWtMooq2OwJpV4Q///r7t7tda9kh6JmnS36PUOb/1zIBWN4F7hLBGFRKKVs5U+bzWjSHIk3PMZ0172nz/8l7AmY/V12LE4+UADb0Xe89HfxbfdNvxzJuc8KRN4942xSNdh7Sjq6Z1EwO07X/anOyEVsBR1j2+kV78Q9JoHECGCPHhe60H8DKjkrS35uhvCS0OMlN9gvtNWotsemGNIvFW5nqxlvlT/BTpQvdbRpL+zpVqhuzSp/cmQ59v+zJwetaZBkrklL65K50SAJnoiWHaGXeKQmUPbEZzAnPeTIa/+P7t5/Zy44EUBgLcHCnUwJosyfg22Zv5AVEwKryFVr6VV2f/x+1dLr7j1E4AUg8j88z/b0wDViE9OAe+9HV1zH4xyiWALz2+9P6PujrPB08RqEEYHkhmUnIjyngf5U4Uc8s7vUAC54jcf8q/QlGasLxXH88EqseK1+f9CcWadpGcolt5Uqn7e1YTcduQeqTihz8q9tXf6paASVId8MitSq1pT2hSME/xvMVg502+pC0Um4S+xpUK++0J+OVALRWCmo+oZel0mqUweq5V18fkPJEPILfejFQhEd2NYJHm9W0b5Uk0OZhoLcibsNldUwRktAVqyDcHnO2+C5r6bKY1d0/25Re1Qp6JsI0b4VWQLoTsLgImQeAZo89SsKYeYXX289Kq9gVSHXwXsGf6SJHeQty1VeuV2sFtHw56BmCf/37tL5z5oWfFqK2pN4iAfyH4Jf5PovXrs8cC+akTQAeFS2qKMGv9X0z30USeCdNJR9D73n87P06y+P3Dv4ox5K9zmzStADI8Me8K6Jnxc8adJGkSACWwU+lOuedbI5UG5SzFnoloMXy28wVxrPpHyH4PVVZHRgyAbAbL57wCMbP79v+nK1uhksAngs+sl28Pe7+MWRLBKHGAK4WlmQpUCsVmp9aLMpmZQlzJGFaAJGml3COa/JlK4uzYM/QGgjRAiD411BWvrYW6tl1iNwacE8ABP9zkStUd2eJIOo1c00A0YI/6kVCPlmSQJgxgDFibO3l+TpwRttrOZqe/PH9289I19UtAXivX3/6uYjHh3NR1pJETwIuXQDLbb2kgksjSK+OL0oFyeDNtZGsG3cidwdCdQEkabwdRlKUHW66s2rlRV06XG5jRemmn0YFWR389NwWPWpymrlOWu90eCLaOE+pFoBGc9oiQXlXghnRj3Hm+GZaepH65xZMxwA0s1+GvnTW4K/Ia+FOtMeX3RcCSfDan27V2+OLfl5HvCv6mWwLd6S5JQDtARetn/2WR+sniu34Ih+nZRKIVD/NEoBWYUYbVDmS4Rhx3BqwSFqeibFEFwDQFLnlsip1Ash4Z5U6xgznOkbO4LEo2yjXL3UC2ItSoJ+0R5QzDHZmZN0V8EqULglAosJmvLMA0ZRpAWTQ7U6dsYt2peJNhwSgqGKF6SR7wppBAgAaIwFARbXmf1UkAIirFPyZj31GiQRQ/SJlwrhHLi6PA+8fuZR4Qq7bI5xR8bRjPmH2BERuBP8ar7JK2wXIULkyHOOqs731Opz7iig3wBA7AnV5Lr5KVyXKjrsWogSqFtcEUKmiVLFS4bme73ndHEy+sHsTMeK0mPSdLcI5abDeyMW6HF1aAFUrS3QE/TPaiTvCS0PMX8VVvdKc8dxWWyrwu107yxfYfP6dVVmTAA54vh9QUoR98DVpXifrF7d4xYnqNGDG4P+UdRT4rgJn30jE87povFbMa7vwtOsAcO7qHQmZgz4a6UTgkQTMBgGpeDYijCxb0zi/J8GYeX2HWgsga9N5jLwB0zH4rdx1m7IOtNIFmJAhmRH8dizfJqRd90gARVUO/igJWSsJWF47kwSQsTJGe4njlQqzLVlZtAQ0616Ih4FmRX9HvYZtgGm2EnQqmzFinO+T6xONSgugyksUvN4Tt/9l9b1ZRC2LTC3GPcYAHtIa6JGYU45wN9TUqatTYiVgBZp9PMmFJJWDIYuM18Dk4QapgvG8A0hOsz0J+oyVSkOWu7/kcVqcc6pBQM/BlrNHN7d/m/kZnXbSkZSlP52RShfAqiJbV4yrVWB3S0VnHs6ROMZqWOCkK1ULYIxf78TW67CvWiE07WUR/PpMBgGrPDq5//6VjUypxPcIfhtlZgE0ntG+8zSYqcBzCH476boAm7OmuMdqwau3HFkfS2aUnz3VgvXcU+2IZkWi8r5nvf2WJsltypgGnDQ7PagVpNWDX2vvvWrToppdUK2yMN0U1OKCvr0I0ot6slXeM9J358oblUrXdYvYMW0BWEzZvZkh0NjvXfLnRcV7Br5kegR4r0QX4Ip1vz9zJf7k9dRlNlmWKR9Rnwb0nrPXUj34j0iuYaiwNfkm8zm4PUyTudA6BP/s9YowA1ONZay4dQEyb6X8qcp5bFjS3IfZSsAqFaVSS+ZIh9bNGamNWVaPYf9n7bJ3XQpcZTygiu7Bf/XnqkK8qTZLJat696++lmFGhNWIHvXLvAVg9UIFnDvaePRTp+Af43qGo3L9dLvI2SpetLu/VqX0Pq8orFuqXvUrZCWOWAkjJICMa80zs0oCnnXLdRDw7RZb3ioFf5XFOBoiP7siJcSFjzAAc8X77h+9fKrTfCjHu26FeBbgakMNjw0+Isk8a1JRpQVsYwTbEuyqYCMs0rBG8ENbiBbA3t32Wp//VjUgvJuG+OL5Pgpt4RLAZiYRnP271g4/Ej/7DYIfWsImgM2+8s9m4ezZOvvxI4/wCWDvTTLIjrv/ue4DxBJCDQI+YbGhRKX5/mo+3w7leSyZpWoBnLmbPVj5fOUBoKysr0fl618iAVzRWLih3eqgaXss09LxNzzOo3wCyKhKhZYSaVbG8r0IFkgACCvCi0MiBKkmEgCWSTbNI704xHIxllerj6bmJFbmHXtzh5xd5HX2OSua1zxKfaIFAHPRA38M2+D3RAKYxHTgr86WYUuUk9cd0eMae7YmacY+EKXZFsHTZzAiDOjdsZhmjFaH3As9m2gX0EOlx5QtpxgjlhtdADwSsRKfWWnOdwj+MRI/C+Cl6stO75xtxhKhEkvrEvxj0AIQUW2bqL1Iq/A0aZ1L5OAfgzGA16JfWAnV195rylJ2oQ4mm6pJoMtdX0O2sgt3QNlUSQIZpukiy1p+IQ8qmyzNvSNZK66lSLMJ0kIfXCZZmn5PKnOk4/byNvizlF2Kg8wkaiKYrchZKq6VDM8trEh1sFlEaVZzt5eVuat3Ju2BZ+Bx1yXo9VVaDp72wLPQ6ENmftpu47HvodR3kgDwitey4aNHdCONR1hv7SWZADIH/xgkADcWyeDuuYVIz9xnWYobpQylpD74SlYTwkxFjLRoSXtATWs2hgSA1DIkgY30pqIS50kCQHqRksAYPt2hN6oF/xjsB9DSUcX13NdA8x2P2u+PzI6CaSzqwpaI05wV7/5jkADai7p0eRNhYVO0LpOkEieBNVGWLkdV9e4/BgkAO5FeyxVF5eAfg0FA7MwMmHXZBHWMHudaKptBVvTxAU2V+/175U4IOroExBi9zpUuAKZUDYBPnYJ/DBIAHqj+UpRuwT8GLwYBwi6IslD+BCGvytRY50HOTYuThCzNprJFciHwv7Q6WcjRClSN4GRH5HPtThhyPJKAho6Bv2l74lhn2RWQ1jnoAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAT1D9jl4hqF+W9iAAAAAElFTkSuQmCC" alt="" /><span>My Agent</span></button>
+    </div>
+    <section class="screen on" id="start">
+      <p class="lede" id="ai-status"></p>
+      <div class="poke" id="poke">
+        <div class="bubble" id="poke-copy"></div>
+      </div>
+      <div id="poke-ahead" style="display:none">
+        <div class="choices">
+          <button type="button" class="ghost" onclick="aheadYes()">Yes, add a step</button>
+          <button type="button" class="quiet" onclick="aheadNo()">Not now</button>
+        </div>
+      </div>
+      <div id="poke-late" style="display:none">
+        <div class="choices">
+          <button type="button" class="ghost" onclick="markDone()">Complete</button>
+          <button type="button" class="quiet" onclick="ignoreToday()">Ignore today</button>
+        </div>
+      </div>
+      <h1 id="start-title">Let’s do it.</h1>
+      <p class="lede" id="start-lede">This is where the day starts.</p>
+      <p class="act" id="start-act"></p>
+      <div class="actions">
+        <button type="button" id="btn-begin" onclick="markDone()">Mark as done</button>
+        <button type="button" class="ghost" id="btn-next" onclick="parkAssigned()">Leave it on my plate for later</button>
+        <button type="button" class="quiet" id="btn-ignore" onclick="ignoreToday()">Ignore today</button>
+        <button type="button" class="quiet" id="btn-pile" onclick="show('disciplined')">Pile it on</button>
+        <button type="button" class="ghost" id="btn-cloud" onclick="show('settings')">Turn the cloud model on</button>
+      </div>
+    </section>
+
+    <section class="screen" id="doing">
+      <p class="kicker">Begin here</p>
+      <h1 id="doing-title"></h1>
+      <p class="lede">Let’s get this off your plate. Check it off when you’re done.</p>
+      <p class="act" id="doing-act"></p>
+      <div class="actions">
+        <button type="button" onclick="markDone()">Check it off</button>
+        <button type="button" class="quiet" onclick="show('start')">Leave it on the plate</button>
+      </div>
+    </section>
+
+    <section class="screen" id="plate">
+      
+      <h1>Will be addressed today.</h1>
+      <p class="lede">Every must-do for today — one-time and all-the-time stuff.</p>
+      <div class="rule"></div>
+      <div id="plate-rows"></div>
+    </section>
+
+    <section class="screen" id="disciplined">
+      
+      <h1>Lay it on me.</h1>
+      <p class="lede">I’ll hold the organizing. Tell me what has to get done. We keep it so you only have to say it once.</p>
+      <div class="rule"></div>
+      <div id="disc-rows"></div>
+      <div class="actions">
+        <button type="button" onclick="editingId=null;show('place')">Add to the list</button>
+        <button type="button" class="ghost" onclick="connectGoogle()">From calendar and email</button>
+      </div>
+    </section>
+
+    <section class="screen" id="place">
+      <p class="kicker">Pile it on</p>
+      <h1>Add to the list</h1>
+      <p class="lede">Add it to the list. We’ll figure the rest out.</p>
+      <div class="rule"></div>
+      <div class="step on" id="s-name">
+        <input id="seed-text" type="text" placeholder="pile it on here" autocomplete="off" />
+        <div class="actions">
+          <button type="button" class="ghost" id="btn-mic" onclick="startDictate()">Speak it</button>
+          <button type="button" onclick="startAuto()">Continue</button>
+          <button type="button" class="quiet" onclick="show('disciplined')">Cancel</button>
+        </div>
+      </div>
+      <div class="step" id="s-auto">
+        <p class="act" id="auto-name"></p>
+        <p class="lede" id="auto-wait">Filing this…</p>
+        <p class="act" id="auto-plan"></p>
+        <p class="lede" id="auto-step"></p>
+        <div class="actions" id="auto-actions" style="display:none">
+          <button type="button" onclick="acceptAuto()">That’s right</button>
+          <button type="button" class="ghost" onclick="stepKind()">Change it</button>
+        </div>
+      </div>
+      <div class="step" id="s-kind">
+        <p class="act" id="kind-echo"></p>
+        <p class="lede" id="kind-guess">One time, or all the time?</p>
+        <div class="choices">
+          <button type="button" class="ghost" onclick="stepOnceDate()">One time</button>
+          <button type="button" class="ghost" onclick="stepHow()">All the time</button>
+        </div>
+      </div>
+      <div class="step" id="s-date">
+        <p class="lede">When is this?</p>
+        <div class="choices">
+          <button type="button" class="ghost" onclick="setOnceDate('today')">Today</button>
+          <button type="button" class="ghost" onclick="setOnceDate('tomorrow')">Tomorrow</button>
+        </div>
+        <p class="lede">Or another day</p>
+        <input id="once-date" type="date" />
+        <div class="actions">
+          <button type="button" onclick="setOncePicked()">Use that date</button>
+        </div>
+      </div>
+      <div class="step" id="s-how">
+        <p class="lede">Daily = pick days. Weekly = all week. Monthly = pick dates.</p>
+        <div class="choices">
+          <button type="button" class="ghost" onclick="stepScroll('daily')">Daily</button>
+          <button type="button" class="ghost" onclick="stepScroll('weekly')">Weekly</button>
+          <button type="button" class="ghost" onclick="stepScroll('monthly')">Monthly</button>
+          <button type="button" class="ghost" onclick="stepNeeded()">As needed</button>
+        </div>
+      </div>
+      <div class="step" id="s-when">
+        <p class="lede" id="when-ask"></p>
+        <div class="scroll" id="when-choices"></div>
+        <div class="actions">
+          <button type="button" onclick="confirmScroll()">Use these</button>
+        </div>
+      </div>
+      <div class="step" id="s-needed">
+        <p class="lede">When it’s done?</p>
+        <div class="choices">
+          <button type="button" class="ghost" onclick="needThenRemind('as-needed','clear')">Clear it when done</button>
+          <button type="button" class="ghost" onclick="needThenRemind('as-needed','reassign')">Put it back when done</button>
+        </div>
+      </div>
+      <div class="step" id="s-remind">
+        <p class="lede">How should this tap you? Select every one you want.</p>
+        <div class="choices">
+          <button type="button" class="ghost" id="rem-app" onclick="toggleRemind('app')">App</button>
+          <button type="button" class="ghost" id="rem-phone" onclick="toggleRemind('phone')">Phone</button>
+          <button type="button" class="ghost" id="rem-text" onclick="toggleRemind('text')">Text</button>
+        </div>
+        <div class="actions">
+          <button type="button" onclick="saveRemind()">Done</button>
+        </div>
+      </div>
+      <div class="step" id="s-ahead">
+        <p class="lede" id="ahead-ask">When should I knock before this?</p>
+        <div class="choices" id="ahead-units">
+          <button type="button" class="ghost" onclick="aheadUnit('min')">Minutes</button>
+          <button type="button" class="ghost" onclick="aheadUnit('hour')">Hours</button>
+          <button type="button" class="ghost" onclick="aheadUnit('day')">Days</button>
+          <button type="button" class="quiet" onclick="setAheadMin(0)">On the day</button>
+        </div>
+        <div class="choices" id="ahead-amounts" style="display:none;margin-top:12px"></div>
+      </div>
+      <div class="step" id="s-clock">
+        <p class="lede">AM or PM. Type the time.</p>
+        <div id="ampm-choices"></div>
+        <p class="lede" id="clock-list" style="text-align:center;font-size:20px;color:var(--ink);margin-top:12px"></p>
+        <input id="clock-type" type="tel" inputmode="numeric" placeholder="type here" autocomplete="off" />
+        <div class="actions">
+          <button type="button" class="ghost" onclick="startClockVoice()">Speak the time</button>
+          <button type="button" onclick="clockThenRemind()">Done</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="import">
+      <p class="kicker">From Google</p>
+      <h1 id="import-title">Keep or ignore.</h1>
+      <p class="lede" id="import-lede">One at a time. Keep files it. Ignore throws it out.</p>
+      <p class="act" id="import-name"></p>
+      <p class="lede" id="import-meta"></p>
+      <div class="actions" id="import-actions">
+        <button type="button" onclick="keepOne()">Keep</button>
+        <button type="button" class="ghost" onclick="ignoreOne()">Ignore</button>
+        <button type="button" class="quiet" onclick="show('disciplined')">Stop</button>
+      </div>
+    </section>
+    <section class="screen" id="settings">
+      <p class="kicker">Away from the office</p>
+      <h1>Cloud model</h1>
+      <p class="lede">This app uses a cloud model, not the PC. Paste a Groq key (free) or an xAI key. It stays on this device only.</p>
+      <div class="rule"></div>
+      <div class="choices">
+        <button type="button" class="ghost" onclick="setProvider('groq')">Groq</button>
+        <button type="button" class="ghost" onclick="setProvider('xai')">xAI</button>
+      </div>
+      <p class="lede" id="provider-now"></p>
+      <input id="api-key" type="text" placeholder="paste API key" autocomplete="off" autocapitalize="off" spellcheck="false" onblur="saveAllCloud()" />
+      <p class="lede" id="key-saved"></p>
+      <div class="rule"></div>
+      <p class="lede">Google Client ID (Calendar + email)</p>
+      <input id="google-client" type="text" placeholder="xxxxx.apps.googleusercontent.com" autocomplete="off" autocapitalize="off" spellcheck="false" onblur="saveAllCloud()" />
+      <p class="lede" id="google-saved"></p>
+      <div class="actions">
+        <button type="button" onclick="saveKey()">Save key</button>
+        <button type="button" class="ghost" onclick="saveGoogle()">Save Google ID</button>
+        <button type="button" onclick="connectGoogle()">Connect Google</button>
+        <button type="button" class="quiet" onclick="show('start')">Back</button>
+      </div>
+    </section>
+    <section class="screen" id="results">
+      
+      <h1>Take a look.</h1>
+      <p class="lede">See how discipline paid off. It’s time to celebrate.</p>
+      <div class="meter-wrap">
+        <p class="meter-label" id="meter-label"></p>
+        <div class="meter" aria-hidden="true"><span id="meter-fill"></span></div>
+      </div>
+      <div class="rule"></div>
+      <div id="result-rows"></div>
+      <div class="actions">
+        <button type="button" class="ghost" onclick="downloadTrain()">Download what the model can learn</button>
+        <button type="button" class="quiet" onclick="show('settings')">Cloud model</button>
+      </div>
+    </section>
+
+    
+    <section class="screen" id="agent">
+      <div class="topbar">
+        <p class="kicker" style="display:flex;align-items:center;gap:6px;color:var(--bell)"><img src="data:image/png;base64,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" alt="" style="width:36px;height:36px;object-fit:contain" /> My Agent</p>
+        <div style="display:flex;gap:16px;align-items:center">
+          <button type="button" class="quiet" onclick="clearAgentChat()" style="min-height:36px;padding:0">Clear chat</button>
+          <button type="button" class="quiet" onclick="closeAgent()" style="min-height:36px;padding:0">Close</button>
+        </div>
+      </div>
+      <p class="lede">This chat stays on this phone until you have an account.</p>
+      <div class="agent-log" id="agent-log"></div>
+      <div class="agent-offer" id="agent-offer" style="display:none"></div>
+      <div class="agent-compose">
+        <input id="agent-text" type="text" placeholder="Lay it on me." autocomplete="off" />
+        <button type="button" class="ghost" onclick="speakAgent()">Speak</button>
+        <button type="button" onclick="sendAgent()">Send</button>
+      </div>
+    </section>
+    <nav class="tabs">
+      <button class="on" type="button" onclick="show('start')"><img class="tab-ico" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAAFI0lEQVR4nO3d2VUcSRCG0dSc8QcPMAFjZYI8kEXMA9MHibW7a8mI/O991ENTZGV8tXAQYwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABU9vD49HzLv7Ouf2YfAOe6DPnbYf/s31mbAAS5duhFIMeP2QfAOe4Z6t+/ftofi3OCF7fH1VwI1uURYGF73cp7JFiXACxq76EVgTUJwIKOGlYRWI8ALOboIRWBtQjAQs4aThFYh7e7C5g5kH5C0JuT19yW4f9zePf6HHrxCNDYnkO7ZYg9EvQlAE0dccUWgTwC0NCRt+sikEUAmjnjWV0Ecnh508TWwbpnqGd8Tc7lBDUw+w397K/PcTwCFFdh+DwSrEsACqsw/Ht8ngjUJQBFVRr+PT5XBGoSgIIqDv8eny8C9QhAMZWHf4+vIwK1eENbRIfB/0jX4+aFO4ACOg+Ru4HeBGCyzsN/IQJ9CcBEKwz/hQj0JACTrDT8FyLQjwBMsOLwX4hAL6U302qSfrkm6XvtzCKfZOWr/ldSv+8uPAKcIHkIPBLUJgAHSx7+CxGoSwAOZPhfiUBNAnAQw/+eCNSz5Eabydvv71mjOizkjlz1b2O95vMIsBOb+XYeCeYTgB0Y/vuJwFwCsJHh304E5hGADQz/fkRgDgG4k+Hfnwicz0a8kcE/h3U+hzuAG9iU53E3cA4BuJLhP58IHE8ArmD45xGBYwnANwz/fCJwHAH4guGvQwSOYZN+wC+r1OXc7MtivOGq34PztA+PAH+wqfrwSLAPAfif4e9HBLYTgGH4OxOBbeIDYPj7E4H7xW5gb5PX45zeLu4bHsNVf3XO7/XiHgFsjvV5JLheVAAMfw4RuE5MAAx/HhH4XkQADH8uEfja8gEw/IjA55bd4Aafj9gXf1vyDsBJ5jPuBv62XAAMP98RgVdLBcDwcy0ReLFMAAw/txKBRQJg+LlXegRab36//MFeUvdSy4Mew1WfY6Ttq3YHPMY5t14dTyZfs2/ea/cOIK3QnC/pvUCrABh+zpISgTYBMPycLSEC5QPw8Pj0bPiZZWsEqoegdAC2Dr7hZw9b91LlCJQNgKs+1awYgZIBMPxUtVoESgbg3kU2/Jxhpf1ZMgBj3L5YFReXda2yP8sGYIzrF63q4rK2Ffbnv7MPYIvKC0uGyx6s+Hx/jdJ3AGN8PuSGn0q67tPyARjj/SJWX1QyddynLQIwxutidlhUcnXbp20CMEafRSVbp33aKgDAvgQAggkABBMACCYAEEwAIJgAQDABgGACAMEEAIIJAAQTAAgmABBMACCYAEAwAYBgAgDBBACCCQAEEwAI1voPgyTq8AcoOv2nmOncAUAwAYBgAgDBvAMorMPz/kc+Om7vBWpyBwDBBACCCQAEEwAIJgAQzE8BFjDzDXvXn1Twwh0ABBMACCYAEEwAIJgAQDABgGACAMEEAIIJAAQTAAgmABBMACCYAEAwAYBgAgDBBACCCQAEEwAIJgAQTAAgmABAMAGAYAIAwQQAggkABBMACCYAEEwAIJgAQDABgGACAMEEAIIJAAQTAAgmABBMACCYAEAwAYBgAgDBBACCCQAEEwAIJgAQTAAgmABAsB+zD+BsD49Pz7OPgdp+//oZMxfuACCYAEAwAYBgAgDBYl52fMZLQZJe+r3lDgCCCQAEEwAIJgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADE+w9pbZ8J1wo9LQAAAABJRU5ErkJggg==" alt="" />Begin</button>
+      <button type="button" onclick="show('plate')"><span class="tab-mark"><span class="badge" id="plate-badge"></span></span><img class="tab-ico" src="data:image/png;base64,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" alt="" />Plate</button>
+      <button type="button" onclick="show('disciplined')"><img class="tab-ico" src="data:image/png;base64,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" alt="" />Pile</button>
+      <button type="button" onclick="show('results')"><img class="tab-ico" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAYAAABccqhmAAADGUlEQVR4nO3d0Y0aQRBF0cbafJyBQ3CwhEAGRGR/25LRYmC7mHtOBG801BV/sxYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA7HPaPYDHfP/x89fuDdfL2e/oTX3bPYD/N+H415qzg/sJwJuadnTT9vA5AvCGph7b1F38mwC8melHNn0ffxIACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACBMACPvYPQBumfCtwevlfNq94VX8A2CsCce/1pwdryAAjDTt6KbteRYBYJypxzZ11yMEgFGmH9n0ffcSAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAgTAAj72D3g1SZ8y+3I35fnvR36H8CE419rzg7422EDMO3opu2BtQ4agKnHNnUXXYcLwPQjm76PlsMFAPg8AYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYAwAYCwwwXgejmfdm+45dF9nm+v6fvudbgArDX3JT1rl+fbY+quRxwyAGvNe1nP3uP5vta0Pc9y2ACsNeelvWqH5/saU3YAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA3/AYQL206Ul6q/QAAAABJRU5ErkJggg==" alt="" />Results</button>
+    </nav>
+  </div>
+  <script>
+    const KEY = "rewired-therapy-v5";
+    const OLLAMA = "http://127.0.0.1:11434/api/chat";
+    const MODEL = "llama3.2";
+    const KEEPER = "You assign one next action for an ADHD executive-function app. Short sentences. No pep talk. No emoji. Return only the first physical step, under 12 words. Examples: Open the bill and read the amount. Put both hands in the sink. Stand up and pick up the shoes.";
+    function cleanSecret(s) {
+      return String(s || "")
+        .replace(/git\s*push/gi, "")
+        .replace(/\s+/g, "")
+        .trim();
+    }
+    function cloudCfg() {
+      try { return JSON.parse(localStorage.getItem("rewired-cloud") || "{}"); }
+      catch (e) { return {}; }
+    }
+    async function askCloud(user, system) {
+      const cfg = cloudCfg();
+      const key = cfg.key || "";
+      const who = cfg.provider || "groq";
+      if (!key) throw new Error("no cloud key");
+      const messages = [
+        { role: "system", content: system || KEEPER },
+        { role: "user", content: user }
+      ];
+      if (who === "xai") {
+        const res = await fetch("https://api.x.ai/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+          body: JSON.stringify({ model: "grok-2-latest", messages: messages, temperature: 0.2 })
+        });
+        if (!res.ok) throw new Error("xai " + res.status);
+        const data = await res.json();
+        return ((((data.choices || [])[0] || {}).message || {}).content || "").trim();
+      }
+      const models = ["llama-3.3-70b-versatile","llama-3.1-8b-instant","openai/gpt-oss-20b"];
+      let last = "groq";
+      for (const model of models) {
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
+          body: JSON.stringify({ model: model, messages: messages, temperature: 0.2 })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          return ((((data.choices || [])[0] || {}).message || {}).content || "").trim();
+        }
+        last = "groq " + res.status + " " + model;
+      }
+      throw new Error(last);
+    }
+    async function askKeeper(user, system) {
+      return askCloud(user, system);
+    }
+    async function pingAI() {
+      const el = document.getElementById("ai-status");
+      if (cloudCfg().key) {
+        if (el) el.textContent = "Cloud model: on";
+        return true;
+      }
+      if (el) el.textContent = "Cloud model: off — add a key under The Results";
+      return false;
+    }
+    function setProvider(name) {
+      const cfg = cloudCfg();
+      cfg.provider = name;
+      localStorage.setItem("rewired-cloud", JSON.stringify(cfg));
+      drawSettings();
+    }
+    function saveKey() { saveAllCloud(); }
+    function drawSettings() {
+      const cfg = cloudCfg();
+      const el = document.getElementById("provider-now");
+      if (el) el.textContent = "Using " + (cfg.provider || "groq") + (cfg.key ? " · key saved on this device" : " · no key yet");
+      const box = document.getElementById("api-key");
+      if (box && cfg.key) box.value = cfg.key;
+      const g = document.getElementById("google-client");
+      if (g && cfg.googleClient) g.value = cfg.googleClient;
+    }
+    async function writeFirstStep(item) {
+      if (!item) return;
+      try {
+        const step = await askKeeper("Task name: " + item.name + ". When: " + (item.when || "unspecified") + ". Give the first physical step only.");
+        if (step) {
+          item.action = step.replace(/^["']|["']$/g, "");
+          persist();
+          pruneSpentOnce();
+    settleOverdue();
+    knockAhead();
+    noteVisit();
+    askPhoneAlerts();
+    drawStart();
+    checkPokes();
+    setInterval(checkPokes, 20000);
+        }
+      } catch (e) {}
+    }
+
+    const WEEKDAYS = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+    let draft = "", pendingKind = "", pendingWhen = "", editingId = null;
+    let items = load().items || [];
+    let assignedId = load().assignedId || null;
+    let log = load().log || [];
+    let train = load().train || [];
+    if (!train.length && log.length) {
+      train = log.map((e) => ({ name: e.name, when: "", step: "", outcome: e.started ? "done" : "parked", at: e.at || "" }));
+      persist();
+    }
+
+
+    let googleToken = "";
+    let importDraft = [];
+    function googleClientId() {
+      return "617086018843-3imv5i62s9supoi50keqn6p79290ae78.apps.googleusercontent.com";
+    }
+    function saveGoogle() { saveAllCloud(); }
+    function saveAllCloud() {
+      const cfg = cloudCfg();
+      cfg.provider = cfg.provider || "groq";
+      const keyBox = document.getElementById("api-key");
+      const gBox = document.getElementById("google-client");
+      if (keyBox && keyBox.value.trim()) cfg.key = cleanSecret(keyBox.value);
+      if (gBox && gBox.value.trim()) cfg.googleClient = cleanSecret(gBox.value);
+      localStorage.setItem("rewired-cloud", JSON.stringify(cfg));
+      const n = document.getElementById("google-saved");
+      if (n) n.textContent = cfg.googleClient ? "Google ID saved." : "No Google ID in the box.";
+      const k = document.getElementById("key-saved");
+      if (k) k.textContent = cfg.key ? "Groq key saved." : (k.textContent || "");
+      drawSettings();
+      pingAI();
+      return cfg;
+    }
+    function connectGoogle() {
+      const id = googleClientId();
+      if (!id) { show("settings"); const n = document.getElementById("google-saved"); if (n) n.textContent = "Paste your Google Client ID, save, then connect."; return; }
+      if (!window.google || !google.accounts || !google.accounts.oauth2) {
+        alert("Google sign-in script did not load. Use https or localhost, then refresh.");
+        return;
+      }
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: id,
+        scope: "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/gmail.readonly",
+        callback: (resp) => {
+          if (!resp || !resp.access_token) return;
+          googleToken = resp.access_token;
+          pullGoogle();
+        }
+      });
+      client.requestAccessToken();
+    }
+    async function gfetch(url) {
+      const res = await fetch(url, { headers: { Authorization: "Bearer " + googleToken } });
+      if (!res.ok) throw new Error("google " + res.status);
+      return res.json();
+    }
+    function alreadyPiled(name) {
+      const n = String(name || "").trim().toLowerCase();
+      return items.some((i) => String(i.name || "").trim().toLowerCase() === n);
+    }
+    async function pullGoogle() {
+      importDraft = [];
+      const now = new Date();
+      const later = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
+      const earlier = new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000);
+      try {
+        const cal = await gfetch("https://www.googleapis.com/calendar/v3/calendars/primary/events?singleEvents=true&orderBy=startTime&timeMin=" + encodeURIComponent(earlier.toISOString()) + "&timeMax=" + encodeURIComponent(later.toISOString()) + "&maxResults=75");
+        (cal.items || []).forEach((ev) => {
+          const start = ev.start && (ev.start.dateTime || ev.start.date) || "";
+          const dt = start ? new Date(start) : null;
+          let due = "";
+          let clock = "";
+          if (dt && !isNaN(dt.getTime())) {
+            due = dt.getFullYear() + "-" + pad2(dt.getMonth()+1) + "-" + pad2(dt.getDate());
+            let h = dt.getHours();
+            const min = pad2(dt.getMinutes());
+            const ap = h >= 12 ? "PM" : "AM";
+            h = h % 12; if (h === 0) h = 12;
+            clock = h + ":" + min + " " + ap;
+          }
+          const name = ev.summary || "Calendar event";
+          if (alreadyPiled(name)) return;
+          importDraft.push({
+            source: "calendar",
+            name: name,
+            kind: "once",
+            when: dt && !isNaN(dt.getTime()) ? dt.toLocaleString() : "",
+            start: start,
+            dueDate: due,
+            clocks: clock ? [clock] : [],
+            keep: true
+          });
+        });
+      } catch (e) {}
+      try {
+        const seenMail = new Set();
+        async function pullMail(q, cap) {
+          const mail = await gfetch("https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=" + cap + "&q=" + encodeURIComponent(q));
+          for (const m of (mail.messages || [])) {
+            if (seenMail.has(m.id)) continue;
+            seenMail.add(m.id);
+            const full = await gfetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/" + m.id + "?format=metadata&metadataHeaders=Subject&metadataHeaders=From&metadataHeaders=Date");
+            const headers = ((full.payload || {}).headers || []);
+            const sub = (headers.find((h) => h.name === "Subject") || {}).value || "Email";
+            if (alreadyPiled(sub)) continue;
+            const dateHdr = (headers.find((h) => h.name === "Date") || {}).value || "";
+            const parsed = parseMailWhen(sub + " " + dateHdr);
+            importDraft.push({
+              source: "email",
+              name: sub,
+              kind: "once",
+              when: parsed.when || "email",
+              dueDate: parsed.dueDate || "",
+              clocks: parsed.clocks || [],
+              keep: false
+            });
+          }
+        }
+        await pullMail("in:inbox newer_than:7d", 20);
+        await pullMail("newer_than:30d (bill OR invoice OR appointment OR reservation OR due OR statement OR meeting OR calendar)", 15);
+      } catch (e) {}
+      drawImport();
+      show("import");
+    }
+    function parseMailWhen(text) {
+      const out = { when: "", dueDate: "", clocks: [] };
+      const raw = String(text || "");
+      const tm = raw.match(/\b(\d{1,2}):(\d{2})\s*(a\.?m\.?|p\.?m\.?|AM|PM)\b/i);
+      if (tm) {
+        const ap = /p/i.test(tm[3]) ? "PM" : "AM";
+        out.clocks = [parseInt(tm[1], 10) + ":" + tm[2] + " " + ap];
+      }
+      const dt = raw.match(/\b((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:,?\s+\d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/i);
+      if (dt) {
+        const d = new Date(dt[1]);
+        if (!isNaN(d.getTime()) && d.getFullYear() >= 2020) {
+          out.dueDate = d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+        }
+      }
+      if (!out.dueDate) {
+        const sent = raw.match(/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}/i);
+        if (sent) {
+          const d = new Date(sent[0]);
+          if (!isNaN(d.getTime())) out.dueDate = d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+        }
+      }
+      out.when = [out.dueDate, (out.clocks[0] || "")].filter(Boolean).join(" · ") || "";
+      return out;
+    }
+    function drawImport() {
+      const title = document.getElementById("import-title");
+      const lede = document.getElementById("import-lede");
+      const name = document.getElementById("import-name");
+      const meta = document.getElementById("import-meta");
+      const acts = document.getElementById("import-actions");
+      if (!importDraft.length) {
+        if (title) title.textContent = "That’s the pile.";
+        if (lede) lede.textContent = "Nothing left to sort.";
+        if (name) name.textContent = "";
+        if (meta) meta.textContent = "";
+        if (acts) acts.style.display = "none";
+        return;
+      }
+      const row = importDraft[0];
+      const left = importDraft.length;
+      if (title) title.textContent = "Keep or ignore.";
+      if (lede) lede.textContent = left + " left. Keep files it now. Ignore throws it out.";
+      if (name) name.textContent = row.name + ".";
+      if (meta) meta.textContent = [row.source, row.when].filter(Boolean).join(" · ");
+      if (acts) acts.style.display = "";
+    }
+    function fileImportRow(r) {
+      items.push({
+        id: uid(),
+        name: r.name,
+        kind: r.kind || "once",
+        anchors: r.anchors || [],
+        clocks: r.clocks || [],
+        when: r.when || "",
+        dueDate: r.dueDate || "",
+        action: "Open it. Do the first physical step.",
+        doneOn: "",
+        remind: r.remind || ["app"],
+        remindAhead: r.remindAhead || 0,
+        remindAheadMin: r.remindAheadMin || 0,
+        aheadAsked: !!r.aheadAsked
+      });
+      persist();
+      assignFromPlate();
+    }
+    function keepOne() {
+      if (!importDraft.length) return show("disciplined");
+      const row = importDraft.shift();
+      row.dueDate = resolveDue(row) || row.dueDate || "";
+      row.kind = row.kind || "once";
+      row.aheadAsked = true;
+      fileImportRow(row);
+      if (!importDraft.length) show("disciplined");
+      else drawImport();
+    }
+    function ignoreOne() {
+      if (!importDraft.length) return show("disciplined");
+      importDraft.shift();
+      if (!importDraft.length) show("disciplined");
+      else drawImport();
+    }
+    function keepImports() { keepOne(); }
+    function dayNum(s) {
+      const p = String(s || "").split("-").map(Number);
+      if (p.length < 3) return 0;
+      return p[0] * 10000 + p[1] * 100 + p[2];
+    }
+    function pruneSpentOnce() {
+      const stamp = todayStamp();
+      const keep = items.filter((i) => {
+        if (i.kind !== "once" || !i.doneOn) return true;
+        return sameDay(i.doneOn, stamp);
+      });
+      if (keep.length !== items.length) items = keep;
+      items.forEach((i) => {
+        if (i.kind !== "once" || i.doneOn) return;
+        const due = inferDue(i);
+        if (due && dayNum(due) > dayNum(stamp)) {
+          i.dueDate = due;
+          return;
+        }
+        if (due && dayNum(due) < dayNum(stamp)) {
+          i.dueDate = stamp;
+          i.ignoredOn = "";
+          i.pushedOn = stamp;
+        }
+      });
+      persist();
+    }
+    function persist() {
+      localStorage.setItem(KEY, JSON.stringify({ items, assignedId, log, train }));
+    }
+    function load() {
+      try { return JSON.parse(localStorage.getItem(KEY) || "{}") || {}; }
+      catch (e) { return {}; }
+    }
+    function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+    function bucketNow() {
+      const h = new Date().getHours();
+      if (h >= 6 && h < 11) return "Morning";
+      if (h >= 11 && h < 14) return "Noon";
+      if (h >= 14 && h < 17) return "Afternoon";
+      if (h >= 17 && h < 21) return "Evening";
+      return "Night";
+    }
+    function pad2(n) { return (n < 10 ? "0" : "") + n; }
+    function todayStamp() {
+      const d = new Date();
+      return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+    }
+    function addDays(n) {
+      const d = new Date();
+      d.setDate(d.getDate() + n);
+      return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+    }
+    function weekdaysFrom(text) {
+      return WEEKDAYS.filter((n) => new RegExp("\\b" + n + "s?\\b", "i").test(String(text || "")));
+    }
+    function onPlateToday(item) {
+      const stamp = todayStamp();
+      const d = new Date();
+      const todayName = WEEKDAYS[d.getDay()];
+      const anchors = (item.anchors && item.anchors.length)
+        ? item.anchors
+        : (item.anchor ? [item.anchor] : weekdaysFrom(item.when));
+      const due = inferDue(item);
+      if (item.kind === "once") {
+        if (item.doneOn && sameDay(item.doneOn, stamp)) return false;
+        if (due) return sameDay(due, stamp);
+        if (weekdaysFrom(item.when || item.name).length) return false;
+        return true;
+      }
+      if (item.kind === "daily") return item.doneOn !== stamp && (anchors.length ? anchors.includes(todayName) : true);
+      if (item.kind === "weekly") {
+        if (item.doneOn && sameDay(item.doneOn, stamp)) return false;
+        if (anchors.length) return anchors.includes(todayName);
+        if (due) return sameDay(due, stamp);
+        return false;
+      }
+      if (item.kind === "monthly") {
+        if (item.doneOn === stamp) return false;
+        return anchors.includes(String(d.getDate())) || anchors.includes(d.getDate() + "");
+      }
+      if (item.kind === "as-needed") {
+        if (item.asNeeded === "clear" && item.doneOn) return false;
+        return item.doneOn !== stamp;
+      }
+      if (item.kind === "after-last") return item.doneOn !== stamp;
+      return false;
+    }
+    function plateItems() { return items.filter(onPlateToday); }
+
+    function rememberOutcome(item, outcome) {
+      if (!item) return;
+      train.push({
+        name: item.name,
+        when: item.when || "",
+        step: item.action || "",
+        outcome: outcome,
+        at: new Date().toISOString()
+      });
+      persist();
+    }
+    async function assignWithAI() {
+      const plate = plateItems().filter((i) => i.doneOn !== todayStamp());
+      if (!plate.length) { assignedId = null; persist(); return; }
+      const recent = train.slice(-12).map((e) => e.name + " → " + e.outcome).join("; ");
+      const list = plate.map((i) => i.id + " | " + i.name + " | " + (i.when || "")).join("\n");
+      try {
+        const raw = (await askKeeper(
+          "Pick ONE item for Where I start. Reply with that item id only, nothing else.\nNow: " + new Date().toString() + "\nRecent outcomes: " + (recent || "none") + "\nItems:\n" + list
+        )) || "";
+        const hit = plate.find((i) => raw.includes(i.id) || raw.toLowerCase().includes((i.name || "").toLowerCase()));
+        assignedId = hit ? hit.id : plate[0].id;
+      } catch (e) {
+        assignedId = plate[0].id;
+      }
+      persist();
+      const cur = assigned();
+      if (cur) writeFirstStep(cur);
+      pruneSpentOnce();
+    settleOverdue();
+    knockAhead();
+    noteVisit();
+    askPhoneAlerts();
+    drawStart();
+    checkPokes();
+    setInterval(checkPokes, 20000);
+    }
+    function dueFromWhen(when) {
+      const raw = String(when || "").replace(/·/g, " ");
+      if (!raw.trim()) return "";
+      const iso = raw.match(/\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/);
+      if (iso) return stampFromParts(parseInt(iso[1],10), parseInt(iso[2],10), parseInt(iso[3],10));
+      const slash = raw.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b/);
+      if (slash) {
+        let y = parseInt(slash[3], 10);
+        if (y < 100) y += 2000;
+        return stampFromParts(y, parseInt(slash[1], 10), parseInt(slash[2], 10));
+      }
+      const long = raw.match(/\b((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:,?\s+\d{4})?)/i);
+      if (long) {
+        const d = new Date(long[1]);
+        if (!isNaN(d.getTime()) && d.getFullYear() >= 2020) {
+          return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+        }
+      }
+      const named = namedWeekday(raw);
+      if (named != null) return stampForWeekday(named);
+      return "";
+    }
+    function namedWeekday(text) {
+      const raw = String(text || "");
+      for (let i = 0; i < WEEKDAYS.length; i++) {
+        if (new RegExp("\\b" + WEEKDAYS[i] + "s?\\b", "i").test(raw)) return i;
+      }
+      return null;
+    }
+    function stampForWeekday(idx) {
+      const d = new Date();
+      const diff = (idx - d.getDay() + 7) % 7;
+      d.setDate(d.getDate() + diff);
+      return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+    }
+    function inferDue(item) {
+      if (!item) return "";
+      if (item.kind === "weekly" || item.kind === "daily") return "";
+      const days = weekdaysFrom(item.when);
+      if (item.kind === "once" && days.length === 1) return stampForWeekday(WEEKDAYS.indexOf(days[0]));
+      if (item.dueDate && dayNum(item.dueDate)) return item.dueDate;
+      return resolveDue(item) || dueFromWhen(item.when) || dueFromWhen(item.name);
+    }
+    function sameDay(a, b) {
+      const n = (s) => {
+        const p = String(s || "").split("-").map(Number);
+        if (p.length < 3) return "";
+        return p[0] + "-" + pad2(p[1]) + "-" + pad2(p[2]);
+      };
+      return n(a) && n(a) === n(b);
+    }
+    function parseClock(label) {
+      const s = String(label || "");
+      const m = s.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (!m) return null;
+      let h = parseInt(m[1], 10);
+      const min = parseInt(m[2], 10);
+      const ap = m[3].toUpperCase();
+      if (ap === "PM" && h < 12) h += 12;
+      if (ap === "AM" && h === 12) h = 0;
+      return h * 60 + min;
+    }
+    function itemMinutes(item) {
+      const clocks = item.clocks || (item.clock ? [item.clock] : []);
+      const nums = clocks.map(parseClock).filter((n) => n !== null);
+      if (nums.length) return Math.min.apply(null, nums);
+      const fromWhen = parseClock(item.when);
+      if (fromWhen !== null) return fromWhen;
+      return 24 * 60;
+    }
+    function nowMinutes() {
+      const d = new Date();
+      return d.getHours() * 60 + d.getMinutes();
+    }
+    function waitingPlate() {
+      return plateItems().filter((i) => i.doneOn !== todayStamp() && i.ignoredOn !== todayStamp());
+    }
+    function chronoPlate() {
+      return waitingPlate().slice().sort((a, b) => itemMinutes(a) - itemMinutes(b));
+    }
+    function isOverdue(item) {
+      const m = itemMinutes(item);
+      return m < 24 * 60 && m < nowMinutes();
+    }
+    function settleOverdue() {
+      const stamp = todayStamp();
+      waitingPlate().forEach((i) => {
+        if (i.returnedOn === stamp) return;
+        if (!isOverdue(i) || sameDay(i.doneOn, stamp)) return;
+        i.ignoredOn = stamp;
+      });
+      persist();
+    }
+    function daysUntil(due) {
+      if (!due) return 999;
+      const a = dayNum(todayStamp());
+      const b = dayNum(due);
+      if (!a || !b) return 999;
+      const ad = String(todayStamp()).split("-").map(Number);
+      const bd = String(due).split("-").map(Number);
+      const da = new Date(ad[0], ad[1]-1, ad[2]);
+      const db = new Date(bd[0], bd[1]-1, bd[2]);
+      return Math.round((db - da) / 86400000);
+    }
+    function aheadMinutesOf(i) {
+      if (typeof i.remindAheadMin === "number" && i.remindAheadMin > 0) return i.remindAheadMin;
+      if (i.remindAhead) return Number(i.remindAhead) * 1440;
+      return 0;
+    }
+    function itemEventMs(i) {
+      const due = i.dueDate || dueFromWhen(i.when);
+      const clock = (i.clocks && i.clocks[0]) || "";
+      return clockOnDay(due, clock);
+    }
+    function pickAheadItem() {
+      const stamp = todayStamp();
+      const now = Date.now();
+      let best = null;
+      let bestDays = 999;
+      items.forEach((i) => {
+        if (i.doneOn || i.aheadDismiss === stamp) return;
+        if (onPlateToday(i)) return;
+        const due = inferDue(i);
+        if (!due || dayNum(due) <= dayNum(stamp)) return;
+        const days = daysUntil(due);
+        const ahead = aheadMinutesOf(i);
+        const when = itemEventMs(i) || clockOnDay(due, (i.clocks && i.clocks[0]) || "9:00 AM");
+        const inWindow = ahead ? (when && now >= when - ahead * 60000 && now < when) : (days >= 1 && days <= 7);
+        if (!inWindow) return;
+        if (days < bestDays) { best = i; bestDays = days; }
+      });
+      return best;
+    }
+    function knockAhead() {
+      const stamp = todayStamp();
+      const now = Date.now();
+      const picked = pickAheadItem();
+      if (picked && !window._aheadItem) window._aheadItem = picked;
+      items.forEach((i) => {
+        if (i.doneOn) return;
+        const ahead = aheadMinutesOf(i);
+        if (!ahead) return;
+        const when = itemEventMs(i);
+        if (!when || when <= now) return;
+        const start = when - ahead * 60000;
+        if (now < start) return;
+        if (i.aheadPing === stamp) {
+          if (!window._aheadItem) window._aheadItem = i;
+          return;
+        }
+        i.aheadPing = stamp;
+        window._aheadItem = i;
+        const msLeft = when - now;
+        let label = "soon";
+        if (msLeft >= 36 * 3600000) label = Math.round(msLeft / 86400000) + " days";
+        else if (msLeft >= 90 * 60000) label = Math.round(msLeft / 3600000) + " hours";
+        else label = Math.max(1, Math.round(msLeft / 60000)) + " minutes";
+        phonePing("Coming up", i.name + " is in " + label + ".");
+      });
+      persist();
+    }
+    function nextInLine() {
+      const list = chronoPlate();
+      if (!list.length) return null;
+      const now = nowMinutes();
+      const upcoming = list.filter((i) => itemMinutes(i) >= now);
+      if (upcoming.length) return upcoming[0];
+      return list[0];
+    }
+    function avgResponse() {
+      const rows = train.filter((e) => typeof e.responseMin === "number");
+      if (!rows.length) return null;
+      return Math.round(rows.reduce((s, e) => s + e.responseMin, 0) / rows.length);
+    }
+    function lastDoneName() {
+      const rows = train.filter((e) => e.outcome === "done").slice(-1);
+      return rows[0] ? rows[0].name : "";
+    }
+    function assignFromPlate() {
+      const nxt = nextInLine();
+      assignedId = nxt ? nxt.id : null;
+      persist();
+    }
+    function assigned() { return items.find((i) => i.id === assignedId) || null; }
+    function waitingCount() {
+      return waitingPlate().length;
+    }
+    function updateBadge() {
+      const b = document.getElementById("plate-badge");
+      if (!b) return;
+      const n = waitingCount();
+      b.textContent = n ? String(n) : "";
+      b.classList.toggle("on", n > 0);
+    }
+    let pendingRemind = [];
+    let pendingAm = "AM";
+    let pendingHour = "8";
+    let pendingMin = "00";
+    function toggleRemind(kind) {
+      if (pendingRemind.includes(kind)) pendingRemind = pendingRemind.filter((x) => x !== kind);
+      else pendingRemind.push(kind);
+      ["app","phone","text"].forEach((k) => {
+        const b = document.getElementById("rem-" + k);
+        if (b) b.classList.toggle("on", pendingRemind.includes(k));
+      });
+    }
+    function saveRemind() {
+      if (!pendingRemind.length) pendingRemind = ["app"];
+      if (pendingRemind.includes("phone") && "Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+      if (isFutureDue(pendingKind, pendingDue, pendingClocks)) {
+        openAheadAsk(pendingDue);
+        return;
+      }
+      finishPlace();
+    }
+    function stampFromParts(y, m, d) {
+      return y + "-" + pad2(m) + "-" + pad2(d);
+    }
+    function resolveDue(row) {
+      if (!row) return "";
+      if (row.dueDate && dayNum(row.dueDate)) return row.dueDate;
+      const blob = [row.dueDate, row.when, row.name].filter(Boolean).join(" ");
+      const slash = blob.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b/);
+      if (slash) {
+        let y = parseInt(slash[3], 10);
+        if (y < 100) y += 2000;
+        return stampFromParts(y, parseInt(slash[1], 10), parseInt(slash[2], 10));
+      }
+      const cleaned = String(row.when || "").replace(/·/g, " ");
+      return dueFromWhen(cleaned);
+    }
+    function isFutureDue(kind, due, clocks) {
+      const stamp = todayStamp();
+      if (due && dayNum(due) > dayNum(stamp)) return true;
+      if (due && dayNum(due) === dayNum(stamp) && clocks && clocks[0]) {
+        const ms = clockOnDay(due, clocks[0]);
+        return ms && ms > Date.now() + 10 * 60 * 1000;
+      }
+      return false;
+    }
+    function isFutureItem(row) {
+      const due = resolveDue(row);
+      return isFutureDue(row && row.kind, due, row && row.clocks);
+    }
+    function askMissingAhead() {
+      items.forEach((i) => {
+        if (isFutureItem(i)) i.aheadAsked = true;
+      });
+      persist();
+      knockAhead();
+    }
+    function openAheadAsk(due) {
+      const ask = document.getElementById("ahead-ask");
+      if (ask) ask.textContent = due ? "When should I knock before " + due + "?" : "When should I knock before this?";
+      const box = document.getElementById("ahead-amounts");
+      if (box) { box.style.display = "none"; box.innerHTML = ""; }
+      window._skipResetPlace = true;
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-ahead").classList.add("on");
+      show("place");
+    }
+    function aheadUnit(unit) {
+      const box = document.getElementById("ahead-amounts");
+      if (!box) return;
+      const opts = unit === "min" ? [[15,"15 min"],[30,"30 min"],[60,"1 hour"]]
+        : unit === "hour" ? [[60,"1 hour"],[120,"2 hours"],[360,"6 hours"]]
+        : [[1440,"1"],[4320,"3"],[10080,"7"]];
+      box.style.display = "";
+      box.innerHTML = "";
+      opts.forEach(([mins, label]) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ghost";
+        b.textContent = label;
+        b.onclick = () => setAheadMin(mins);
+        box.appendChild(b);
+      });
+    }
+    function setAheadMin(mins) {
+      pendingAheadMin = mins || 0;
+      pendingAhead = Math.round((mins || 0) / 1440);
+      if (window._importHold) {
+        const r = window._importHold;
+        window._importHold = null;
+        r.remindAheadMin = pendingAheadMin;
+        r.remindAhead = pendingAhead;
+        r.aheadAsked = true;
+        if (r.id && items.some((x) => x.id === r.id)) {
+          const i = items.find((x) => x.id === r.id);
+          i.remindAheadMin = pendingAheadMin;
+          i.remindAhead = pendingAhead;
+          i.aheadAsked = true;
+          persist();
+        } else {
+          fileImportRow(r);
+        }
+        if (importDraft.length) { show("import"); drawImport(); }
+        else show("disciplined");
+        return;
+      }
+      finishPlace();
+    }
+    function setAhead(days) { setAheadMin((days || 0) * 1440); }
+    function clockOnDay(due, clock) {
+      if (!due) return 0;
+      const p = String(due).split("-").map(Number);
+      if (p.length < 3) return 0;
+      const dt = new Date(p[0], p[1]-1, p[2], 9, 0, 0);
+      const c = String(clock || "");
+      const tm = c.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (tm) {
+        let h = parseInt(tm[1], 10);
+        const m = parseInt(tm[2], 10);
+        const ap = tm[3].toUpperCase();
+        if (ap === "PM" && h < 12) h += 12;
+        if (ap === "AM" && h === 12) h = 0;
+        dt.setHours(h, m, 0, 0);
+      }
+      return dt.getTime();
+    }
+    function parseTypedClock(raw) {
+      const s = String(raw || "").replace(/[^0-9]/g, "");
+      if (!s) return null;
+      let h = 0, m = 0;
+      if (s.length <= 2) { h = parseInt(s, 10); m = 0; }
+      else if (s.length === 3) { h = parseInt(s[0], 10); m = parseInt(s.slice(1), 10); }
+      else { h = parseInt(s.slice(0, s.length - 2), 10); m = parseInt(s.slice(-2), 10); }
+      if (h < 1 || h > 12 || m > 59) return null;
+      return { hour: String(h), min: (m < 10 ? "0" : "") + m };
+    }
+    function applyClockType() {
+      const box = document.getElementById("clock-type");
+      const parsed = parseTypedClock(box && box.value);
+      if (parsed) { pendingHour = parsed.hour; pendingMin = parsed.min; }
+      const list = document.getElementById("clock-list");
+      if (list) list.textContent = (box && box.value && parsed) ? (pendingHour + ":" + pendingMin + " " + pendingAm) : (pendingHour && (box && box.value) ? pendingHour + ":" + pendingMin + " " + pendingAm : "");
+    }
+    function showClockBuilder() {
+      const am = document.getElementById("ampm-choices");
+      if (!am) return;
+      am.innerHTML = "";
+      ["AM","PM"].forEach((x) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "ghost" + (pendingAm === x ? " on" : "");
+        b.textContent = x;
+        b.addEventListener("click", () => { pendingAm = x; applyClockType(); showClockBuilder(); });
+        am.appendChild(b);
+      });
+      const box = document.getElementById("clock-type");
+      if (box && !box.dataset.wired) {
+        box.dataset.wired = "1";
+        box.addEventListener("input", applyClockType);
+      }
+      applyClockType();
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-clock").classList.add("on");
+    }
+    function startClockVoice() {
+      const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Rec) return;
+      const rec = new Rec();
+      rec.lang = "en-US";
+      rec.onresult = (e) => {
+        const said = (e.results[0] && e.results[0][0] && e.results[0][0].transcript) || "";
+        if (/p\.?\s*m/i.test(said)) pendingAm = "PM";
+        if (/a\.?\s*m/i.test(said)) pendingAm = "AM";
+        const box = document.getElementById("clock-type");
+        const digits = said.replace(/[^0-9]/g, "");
+        if (box && digits) box.value = digits;
+        applyClockType();
+        showClockBuilder();
+      };
+      rec.start();
+    }
+    function paintRemind() {
+      ["app","phone","text"].forEach((k) => {
+        const b = document.getElementById("rem-" + k);
+        if (b) b.classList.toggle("on", pendingRemind.includes(k));
+      });
+    }
+    function clockThenRemind() {
+      applyClockType();
+      const label = pendingHour + ":" + pendingMin + " " + pendingAm;
+      pendingClocks = [label];
+      if (!pendingRemind.length) pendingRemind = [];
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-remind").classList.add("on");
+      paintRemind();
+    }
+    function pushClock() {
+      const label = pendingHour + ":" + pendingMin + " " + pendingAm;
+      if (!pendingClocks.includes(label)) pendingClocks.push(label);
+      showClockBuilder();
+    }
+    function remindList(item) {
+      if (Array.isArray(item.remind)) return item.remind;
+      if (item.remind === "both") return ["app","phone"];
+      if (item.remind === "box") return ["app"];
+      if (item.remind === "message") return ["text"];
+      if (item.remind) return [item.remind];
+      return ["app"];
+    }
+    function remindNow(item) {
+      const modes = remindList(item);
+      if (modes.includes("phone") && "Notification" in window && Notification.permission === "granted") {
+        new Notification("Rewired Therapy", { body: item.name });
+      }
+      return modes.includes("app") || modes.includes("text") || modes.includes("phone");
+    }
+
+
+    function show(id) {
+      document.querySelectorAll(".screen").forEach((s) => s.classList.remove("on"));
+      document.getElementById(id).classList.add("on");
+      const map = { start: "Begin", doing: "Begin", plate: "On my plate", disciplined: "Pile it on", place: "Pile it on", import: "Pile it on", results: "The Results", settings: "The Results", agent: "" };
+      const left = { start: "Begin here", doing: "Begin here", plate: "On my plate", disciplined: "Pile it on", place: "Pile it on", import: "From Google", results: "The Results", settings: "Cloud model", agent: "My Agent" };
+      const chrome = document.getElementById("chrome");
+      const chromeLeft = document.getElementById("chrome-left");
+      if (chrome) chrome.classList.toggle("hide", id === "agent");
+      if (chromeLeft) chromeLeft.textContent = left[id] || "";
+      document.querySelectorAll(".tabs button").forEach((btn) => {
+        const label = (btn.textContent || "").replace(/\s+/g, " ").trim();
+        const want = map[id] || "";
+        btn.classList.toggle("on", label.indexOf(want) >= 0 && want !== "");
+      });
+      if (id === "start") drawStart();
+      if (id === "plate") drawPlate();
+      if (id === "disciplined") drawDisc();
+      if (id === "results") drawResults();
+      if (id === "settings") drawSettings();
+      if (id === "agent") drawAgent();
+      if (id === "place" && !editingId && !window._skipResetPlace) resetPlace();
+      window._skipResetPlace = false;
+      updateBadge();
+    }
+    function closeAgent() { show(window._agentBack || "start"); }
+    function agentThread() {
+      try { return JSON.parse(localStorage.getItem("rewired-agent") || "[]"); }
+      catch (e) { return []; }
+    }
+    function saveAgentThread(rows) { localStorage.setItem("rewired-agent", JSON.stringify(rows.slice(-40))); }
+    function clearAgentChat() {
+      localStorage.removeItem("rewired-agent");
+      const offer = document.getElementById("agent-offer");
+      if (offer) { offer.style.display = "none"; offer.innerHTML = ""; }
+      drawAgent();
+    }
+    function drawAgent() {
+      const log = document.getElementById("agent-log");
+      if (!log) return;
+      log.innerHTML = "";
+      const rows = agentThread();
+      if (!rows.length) {
+        const d = document.createElement("div");
+        d.className = "msg bot";
+        d.textContent = "I’m at your service. Consider me your personal brain agent.";
+        log.appendChild(d);
+      }
+      rows.forEach((r) => {
+        const d = document.createElement("div");
+        d.className = "msg " + (r.role === "user" ? "me" : "bot");
+        d.textContent = r.text;
+        log.appendChild(d);
+      });
+      log.scrollTop = log.scrollHeight;
+    }
+    function agentContext() {
+      const names = items.map((i) => i.name + (i.when ? " (" + i.when + ")" : "")).slice(0, 20).join("; ");
+      const now = assigned();
+      return "Caretaker for Rewired Therapy. The human is the Tamagotchi; you check in. Short sentences. Do not ask for medical records, charts, or diagnoses. Do not invent tasks unless they ask. If they want a task added, end with exactly one line: TASK: the name. Today on the pile: " + (names || "empty") + ". Begin now: " + (now ? now.name : "nothing") + ".";
+    }
+    async function sendAgent() {
+      const box = document.getElementById("agent-text");
+      const text = ((box && box.value) || "").trim();
+      if (!text) return;
+      if (box) box.value = "";
+      const rows = agentThread();
+      rows.push({ role: "user", text: text, at: Date.now() });
+      saveAgentThread(rows);
+      drawAgent();
+      const offer = document.getElementById("agent-offer");
+      if (offer) { offer.style.display = "none"; offer.innerHTML = ""; }
+      const reply = await askKeeper(text, agentContext());
+      const clean = String(reply || "I’m here.").replace(/TASK:\s*(.+)$/im, (m, name) => {
+        paintAgentOffer(name.trim());
+        return "";
+      }).trim();
+      rows.push({ role: "agent", text: clean || "I’m here.", at: Date.now() });
+      saveAgentThread(rows);
+      drawAgent();
+    }
+    function paintAgentOffer(name) {
+      const offer = document.getElementById("agent-offer");
+      if (!offer || !name) return;
+      offer.style.display = "";
+      offer.innerHTML = "Add to pile: " + name + ' <button type="button" class="ghost undo" onclick="agentAddPile(\'' + name.replace(/'/g, "") + '\')">Add to pile</button> <button type="button" class="quiet undo" onclick="this.parentNode.style.display=\'none\'">Not now</button>';
+    }
+    function agentAddPile(name) {
+      draft = name;
+      editingId = null;
+      const offer = document.getElementById("agent-offer");
+      if (offer) offer.style.display = "none";
+      show("place");
+      const seed = document.getElementById("seed-text");
+      if (seed) seed.value = name;
+    }
+    function speakAgent() {
+      const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Rec) return;
+      const rec = new Rec();
+      rec.lang = "en-US";
+      rec.onresult = (e) => {
+        const said = (e.results[0] && e.results[0][0] && e.results[0][0].transcript) || "";
+        const box = document.getElementById("agent-text");
+        if (box) box.value = ((box.value || "") + " " + said).trim();
+      };
+      rec.start();
+    }
+
+    function resetPlace() {
+      draft = "";
+      document.getElementById("seed-text").value = "";
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-name").classList.add("on");
+    }
+    function startDictate() {
+      const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const btn = document.getElementById("btn-mic");
+      if (!Rec) {
+        if (btn) btn.textContent = "This browser can’t dictate";
+        return;
+      }
+      const rec = new Rec();
+      rec.lang = "en-US";
+      rec.interimResults = false;
+      if (btn) btn.textContent = "Listening…";
+      rec.onresult = (e) => {
+        const said = (e.results[0] && e.results[0][0] && e.results[0][0].transcript) || "";
+        const box = document.getElementById("seed-text");
+        if (box) box.value = ((box.value || "") + " " + said).trim();
+        if (btn) btn.textContent = "Speak it";
+      };
+      rec.onerror = () => { if (btn) btn.textContent = "Speak it"; };
+      rec.onend = () => { if (btn) btn.textContent = "Speak it"; };
+      rec.start();
+    }
+    let pendingAuto = null;
+    function startAuto() {
+      draft = document.getElementById("seed-text").value.trim();
+      if (!draft) return;
+      document.getElementById("auto-name").textContent = draft + ".";
+      document.getElementById("auto-wait").textContent = "Filing this…";
+      document.getElementById("auto-plan").textContent = "";
+      document.getElementById("auto-step").textContent = "";
+      document.getElementById("auto-actions").style.display = "none";
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-auto").classList.add("on");
+      autoFile(draft);
+    }
+    async function autoFile(name) {
+      const today = WEEKDAYS[new Date().getDay()];
+      try {
+        const raw = await askKeeper(
+          "Task: " + name + "\nToday is " + today + ".\nReply JSON only, no markdown: {\"kind\":\"once|daily|weekly|monthly|as-needed\",\"anchors\":[],\"clock\":\"8:00 AM\",\"step\":\"first physical action\"}\nanchors are weekdays or month dates as strings. clock is like 7:30 AM.",
+          "You file ADHD tasks. Guess how it repeats and the first physical step. JSON only."
+        );
+        let plan = null;
+        const match = (raw || "").match(/\{[\s\S]*\}/);
+        if (match) plan = JSON.parse(match[0]);
+        if (!plan || !plan.kind) throw new Error("bad plan");
+        pendingAuto = plan;
+        pendingKind = plan.kind;
+        pendingAnchors = Array.isArray(plan.anchors) ? plan.anchors.map(String) : [];
+        const clock = plan.clock || "8:00 AM";
+        pendingClocks = [clock];
+        const bits = clock.replace(":", " ").split(/\s+/);
+        if (bits[0]) pendingHour = String(parseInt(bits[0], 10) || 8);
+        if (bits[1] && bits[1].length >= 2) pendingMin = bits[1].slice(0,2).padStart(2,"0");
+        if (/pm/i.test(clock)) pendingAm = "PM";
+        else pendingAm = "AM";
+        document.getElementById("auto-wait").textContent = "Does this look right?";
+        const kindLabel = ({once:"one time",daily:"every day",weekly:"weekly",monthly:"monthly","as-needed":"as needed"})[plan.kind] || plan.kind;
+        document.getElementById("auto-plan").textContent = [kindLabel].concat(pendingAnchors).concat(pendingClocks).join(" · ");
+        document.getElementById("auto-step").textContent = plan.step || "";
+        document.getElementById("auto-actions").style.display = "";
+      } catch (e) {
+        const why = (e && e.message) ? e.message : "unknown";
+        const hint = !cloudCfg().key
+          ? "No key on this address. Open The Results, Cloud model, paste the Groq key again. File and localhost do not share keys."
+          : "Groq said: " + why + ". Change it and pick by hand.";
+        document.getElementById("auto-wait").textContent = hint;
+        document.getElementById("auto-actions").style.display = "";
+      }
+    }
+    function acceptAuto() {
+      if (pendingAuto && pendingAuto.step) {
+        window._autoStep = pendingAuto.step;
+      }
+      clockThenRemind();
+    }
+    function stepKind() {
+      draft = document.getElementById("seed-text").value.trim();
+      if (!draft) return;
+      document.getElementById("kind-echo").textContent = draft + ".";
+      const g = document.getElementById("kind-guess");
+      if (g) g.textContent = "Asking the model…";
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-kind").classList.add("on");
+      guessKind(draft);
+    }
+    async function guessKind(name) {
+      const g = document.getElementById("kind-guess");
+      if (g) g.textContent = "Asking the model…";
+      try {
+        const raw = await askKeeper(
+          "Task: " + name + "\nReply with only: one time\nOR only: all the time",
+          "You classify tasks. Reply with exactly two words: one time  OR  all the time. Nothing else."
+        );
+        const text = (raw || "").toLowerCase();
+        if (!g) return;
+        if (text.includes("all")) g.textContent = "Guess: all the time. Tap a button to confirm.";
+        else if (text.includes("one")) g.textContent = "Guess: one time. Tap a button to confirm.";
+        else g.textContent = "Guess came back unclear. Pick one.";
+      } catch (e) {
+        if (g) g.textContent = "Model did not answer. Pick one.";
+      }
+    }
+    function stepHow() {
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-how").classList.add("on");
+    }
+    let pendingAnchors = [];
+    let pendingClocks = [];
+    let pendingAhead = 0;
+    let pendingAheadMin = 0;
+    let pendingNeeded = "";
+    function stepScroll(kind) {
+      pendingKind = kind;
+      pendingAnchors = [];
+      if (kind === "weekly") {
+        pendingAnchors = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+        showClockBuilder();
+        return;
+      }
+      const box = document.getElementById("when-choices");
+      box.innerHTML = "";
+      let opts = [];
+      if (kind === "daily") {
+        document.getElementById("when-ask").textContent = "Which days?";
+        opts = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+      } else {
+        document.getElementById("when-ask").textContent = "Which dates?";
+        opts = [];
+        for (let n = 1; n <= 31; n++) opts.push(String(n));
+      }
+      opts.forEach((label) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "pick";
+        b.textContent = label;
+        b.addEventListener("click", () => {
+          if (pendingAnchors.includes(label)) {
+            pendingAnchors = pendingAnchors.filter((x) => x !== label);
+            b.classList.remove("on");
+          } else {
+            pendingAnchors.push(label);
+            b.classList.add("on");
+          }
+        });
+        box.appendChild(b);
+      });
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-when").classList.add("on");
+    }
+    function confirmScroll() {
+      showClockBuilder();
+    }
+
+    let pendingDue = "";
+    function stepOnceDate() {
+      pendingKind = "once";
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-date").classList.add("on");
+    }
+    function setOnceDate(which) {
+      pendingDue = which === "tomorrow" ? addDays(1) : todayStamp();
+      showClockBuilder();
+    }
+    function setOncePicked() {
+      const v = document.getElementById("once-date").value;
+      if (!v) return;
+      pendingDue = v;
+      showClockBuilder();
+    }
+    function needThenRemind(kind, needed) {
+      pendingKind = kind;
+      pendingNeeded = needed || "";
+      showClockBuilder();
+    }
+    function stepNeeded() {
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-needed").classList.add("on");
+    }
+    function stepClockPick(kind, needed) {
+      pendingKind = kind;
+      pendingNeeded = needed || "";
+      pendingClocks = [];
+      const box = document.getElementById("clock-choices");
+      box.innerHTML = "";
+      ["Morning","Noon","Afternoon","Evening","Night"].forEach((label) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "pick";
+        b.textContent = label;
+        b.addEventListener("click", () => {
+          if (pendingClocks.includes(label)) {
+            pendingClocks = pendingClocks.filter((x) => x !== label);
+            b.classList.remove("on");
+          } else {
+            pendingClocks.push(label);
+            b.classList.add("on");
+          }
+        });
+        box.appendChild(b);
+      });
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-clock").classList.add("on");
+    }
+    function stepClock(kind, anchor) {
+      pendingAnchors = anchor ? [anchor] : [];
+      stepClockPick(kind, "");
+    }
+    function finishPlace() {
+      const whenBits = pendingAnchors.concat(pendingClocks);
+      const row = {
+        id: editingId || uid(),
+        name: draft,
+        kind: pendingKind,
+        anchors: pendingAnchors.slice(),
+        clocks: pendingClocks.slice(),
+        asNeeded: pendingNeeded,
+        remind: pendingRemind,
+        dueDate: pendingKind === "once" ? (pendingDue || todayStamp()) : "",
+        remindAhead: pendingAhead || 0,
+        remindAheadMin: pendingAheadMin || 0,
+        aheadAsked: true,
+        when: whenBits.join(" · "),
+        action: window._autoStep || "Dopamine is on the other side of done. How good will that feel?",
+        doneOn: ""
+      };
+      if (editingId) {
+        const i = items.findIndex((x) => x.id === editingId);
+        if (i >= 0) row.doneOn = items[i].doneOn || "";
+        if (i >= 0) items[i] = row;
+        else items.push(row);
+      } else {
+        items.push(row);
+      }
+      editingId = null;
+      window._autoStep = "";
+      persist();
+      assignFromPlate();
+      writeFirstStep(row);
+      show("disciplined");
+    }
+    function placeItem(kind, anchor, clock) {
+      pendingKind = kind;
+      pendingAnchors = anchor ? [anchor] : [];
+      pendingClocks = clock ? [clock] : [];
+      pendingNeeded = "";
+      finishPlace();
+    }
+
+
+    function careState() {
+      try { return JSON.parse(localStorage.getItem("rewired-care") || "{}"); }
+      catch (e) { return {}; }
+    }
+    function saveCare(s) { localStorage.setItem("rewired-care", JSON.stringify(s)); }
+    function noteVisit() {
+      const s = careState();
+      const now = Date.now();
+      if (s.lastOpen) s.lastGapMin = Math.round((now - s.lastOpen) / 60000);
+      s.lastOpen = now;
+      s.opens = (s.opens || 0) + 1;
+      saveCare(s);
+    }
+    function noteIgnore() {
+      const s = careState();
+      s.ignores = (s.ignores || 0) + 1;
+      s.lastIgnore = Date.now();
+      saveCare(s);
+    }
+    function askPhoneAlerts() {
+      if (!("Notification" in window)) return;
+      if (Notification.permission === "default") Notification.requestPermission();
+    }
+    function phonePing(title, body) {
+      if (!("Notification" in window) || Notification.permission !== "granted") return;
+      const show = (reg) => reg && reg.showNotification ? reg.showNotification(title, { body: body, tag: "rewired-" + title, renotify: true }) : new Notification(title, { body: body });
+      if (navigator.serviceWorker && navigator.serviceWorker.ready) {
+        navigator.serviceWorker.ready.then(show).catch(() => new Notification(title, { body: body }));
+      } else {
+        try { new Notification(title, { body: body }); } catch (e) {}
+      }
+    }
+    function pokeState() {
+      try { return JSON.parse(localStorage.getItem("rewired-pokes") || "{}"); }
+      catch (e) { return {}; }
+    }
+    function savePokes(s) { localStorage.setItem("rewired-pokes", JSON.stringify(s)); }
+    function pokeKey(item, kind) { return todayStamp() + ":" + item.id + ":" + kind; }
+    let activePoke = null;
+    function checkPokes() {
+      const box = document.getElementById("poke");
+      const copy = document.getElementById("poke-copy");
+      if (!box) return;
+      const now = nowMinutes();
+      const state = pokeState();
+      const list = chronoPlate();
+      activePoke = null;
+      for (const item of list) {
+        const t = itemMinutes(item);
+        if (t >= 24 * 60) continue;
+        const k30 = pokeKey(item, "30");
+        const k5 = pokeKey(item, "5");
+        const klate = pokeKey(item, "late");
+        if (now >= t - 30 && now < t - 5 && !state[k30]) {
+          activePoke = { item: item, kind: "30", key: k30 };
+          copy.textContent = "In 30 min: " + item.name;
+          document.getElementById("poke-late").style.display = "none";
+          box.classList.add("on");
+          if (!state[k30 + ":ping"]) { phonePing("Thirty minutes", item.name); state[k30 + ":ping"] = 1; savePokes(state); }
+          return;
+        }
+        if (now >= t - 5 && now < t && !state[k5]) {
+          activePoke = { item: item, kind: "5", key: k5 };
+          copy.textContent = "In 5 min: " + item.name;
+          document.getElementById("poke-late").style.display = "none";
+          box.classList.add("on");
+          if (!state[k5 + ":ping"]) { phonePing("Five minutes", item.name); state[k5 + ":ping"] = 1; savePokes(state); }
+          return;
+        }
+        if (now >= t + 5 && !state[klate] && item.doneOn !== todayStamp()) {
+          activePoke = { item: item, kind: "late", key: klate };
+          copy.textContent = item.name + " — still waiting.";
+          document.getElementById("poke-late").style.display = "";
+          box.classList.add("on");
+          if (!state[klate + ":ping"]) { phonePing("Still waiting", item.name + ". Complete or ignore today."); state[klate + ":ping"] = 1; savePokes(state); }
+          return;
+        }
+      }
+      if (window._aheadItem && window._aheadItem.aheadDismiss !== todayStamp()) {
+        paintAhead();
+        return;
+      }
+      box.classList.remove("on");
+    }
+    function pokeHere() {
+      if (activePoke) {
+        const s = pokeState();
+        s[activePoke.key] = Date.now();
+        savePokes(s);
+        const answered = nowMinutes() - itemMinutes(activePoke.item);
+        rememberOutcome(activePoke.item, "answered");
+        train[train.length - 1].responseMin = Math.max(0, answered + (activePoke.kind === "30" ? 30 : activePoke.kind === "5" ? 5 : 0));
+        persist();
+        assignedId = activePoke.item.id;
+        persist();
+      }
+      document.getElementById("poke").classList.remove("on");
+      show("start");
+    }
+    function ignoreToday() {
+      const f = (activePoke && activePoke.item) || assigned();
+      if (f) {
+        f.ignoredOn = todayStamp();
+        f.returnedOn = "";
+        noteIgnore();
+        rememberOutcome(f, "ignored");
+        persist();
+      }
+      if (activePoke) {
+        const s = pokeState();
+        s[activePoke.key] = Date.now();
+        savePokes(s);
+      }
+      document.getElementById("poke").classList.remove("on");
+      assignFromPlate();
+      pruneSpentOnce();
+    settleOverdue();
+    knockAhead();
+    noteVisit();
+    askPhoneAlerts();
+    drawStart();
+    checkPokes();
+    setInterval(checkPokes, 20000);
+    }
+    function drawStart() {
+      if (window._pinAssign) {
+        assignedId = window._pinAssign;
+        window._pinAssign = null;
+        persist();
+      } else {
+        assignFromPlate();
+      }
+      const f = assigned();
+      const begin = document.getElementById("btn-begin");
+      const next = document.getElementById("btn-next");
+      if (!f) {
+        document.getElementById("start-title").textContent = "Let’s do it.";
+        document.getElementById("start-lede").textContent = "Nothing on the plate yet.";
+        document.getElementById("start-act").textContent = "";
+        begin.style.display = "none";
+        next.style.display = "none";
+        const ign0 = document.getElementById("btn-ignore");
+        if (ign0) ign0.style.display = "none";
+        const pile = document.getElementById("btn-pile");
+        if (pile) pile.style.display = "";
+        const cloud = document.getElementById("btn-cloud");
+        if (cloud) cloud.style.display = cloudCfg().key ? "none" : "";
+        knockAhead();
+        paintAhead();
+        return;
+      }
+      begin.style.display = "";
+      next.style.display = "";
+      const ign = document.getElementById("btn-ignore");
+      if (ign) ign.style.display = "";
+      const pile = document.getElementById("btn-pile");
+      if (pile) pile.style.display = "none";
+      const cloud = document.getElementById("btn-cloud");
+      if (cloud) cloud.style.display = cloudCfg().key ? "none" : "";
+      const line = chronoPlate();
+      const idx = line.findIndex((x) => x.id === f.id);
+      const upcoming = line[idx + 1];
+      const clock = (f.clocks && f.clocks[0]) || (parseClock(f.when) !== null ? (String(f.when).match(/(\d{1,2}:\d{2}\s*(AM|PM))/i) || [""])[0] : "");
+      document.getElementById("start-title").textContent = f.name + (clock ? " · " + clock : ".");
+      document.getElementById("start-lede").textContent = upcoming ? ("After this: " + upcoming.name) : "Let’s do it.";
+      document.getElementById("start-act").textContent = f.action || "";
+      paintAhead();
+    }
+    function paintAhead() {
+      const poke = document.getElementById("poke");
+      const copy = document.getElementById("poke-copy");
+      const bar = document.getElementById("poke-ahead");
+      const late = document.getElementById("poke-late");
+      const item = window._aheadItem;
+      if (!item || item.aheadDismiss === todayStamp()) {
+        if (bar) bar.style.display = "none";
+        return;
+      }
+      const when = itemEventMs(item);
+      const msLeft = when ? when - Date.now() : 0;
+      let label = "soon";
+      if (msLeft >= 36 * 3600000) label = Math.round(msLeft / 86400000) + " days";
+      else if (msLeft >= 90 * 60000) label = Math.round(msLeft / 3600000) + " hours";
+      else if (msLeft > 0) label = Math.max(1, Math.round(msLeft / 60000)) + " minutes";
+      if (copy) copy.textContent = item.name + " is in " + label + ". Need a first step before then?";
+      if (poke) poke.classList.add("on");
+      if (bar) bar.style.display = "";
+      if (late) late.style.display = "none";
+    }
+    function aheadNo() {
+      if (window._aheadItem) window._aheadItem.aheadDismiss = todayStamp();
+      persist();
+      window._aheadItem = null;
+      document.getElementById("poke").classList.remove("on");
+      document.getElementById("poke-ahead").style.display = "none";
+    }
+    function aheadYes() {
+      const item = window._aheadItem;
+      aheadNo();
+      if (!item) return;
+      editingId = null;
+      draft = "Prepare for " + item.name;
+      document.getElementById("seed-text").value = draft;
+      show("place");
+    }
+    function parkAssigned() {
+      rememberOutcome(assigned(), "parked");
+      show("plate");
+    }
+    function beginAssigned() {
+      const f = assigned();
+      if (!f) return;
+      document.getElementById("doing-title").textContent = f.name + ".";
+      document.getElementById("doing-act").textContent = f.action;
+      show("doing");
+    }
+    function assignNext() {
+      const plate = plateItems().filter((i) => i.id !== assignedId && i.doneOn !== todayStamp());
+      if (plate[0]) { assignedId = plate[0].id; persist(); }
+      pruneSpentOnce();
+    settleOverdue();
+    knockAhead();
+    noteVisit();
+    askPhoneAlerts();
+    drawStart();
+    checkPokes();
+    setInterval(checkPokes, 20000);
+    }
+    function markDoneId(id) {
+      const f = items.find((x) => x.id === id);
+      if (!f) return;
+      f.doneOn = todayStamp();
+      f.ignoredOn = "";
+      const already = log.some((e) => e.name === f.name && (e.day === todayStamp() || (e.at || "").slice(0,10) === new Date().toISOString().slice(0,10)));
+      if (!already) log.push({ name: f.name, at: new Date().toISOString(), day: todayStamp(), bucket: bucketNow(), started: true });
+      rememberOutcome(f, "done");
+      persist();
+      assignFromPlate();
+      assignWithAI();
+      show("results");
+    }
+    function markDone() {
+      const f = assigned();
+      if (!f) return show("start");
+      markDoneId(f.id);
+    }
+
+    function drawPlate() {
+      settleOverdue();
+      const box = document.getElementById("plate-rows");
+      const rows = chronoPlate().slice();
+      const cur = assigned();
+      if (cur && !cur.doneOn && !rows.some((i) => i.id === cur.id) && onPlateToday(cur)) rows.unshift(cur);
+      plateItems().filter((i) => sameDay(i.doneOn, todayStamp())).forEach((i) => {
+        if (!rows.some((x) => x.id === i.id)) rows.push(i);
+      });
+      box.innerHTML = "";
+      if (!rows.length) {
+        box.innerHTML = '<p class="lede">Nothing on the plate yet. Pile something on, and it will show up here.</p>';
+        return;
+      }
+      rows.forEach((f) => {
+        const row = document.createElement("div");
+        row.className = "row";
+        const status = f.doneOn === todayStamp() ? "begun" : "waiting";
+        row.innerHTML = '<div class="name"></div><div class="meta"></div>';
+        row.querySelector(".name").textContent = f.name;
+        row.querySelector(".meta").textContent = (f.when || "today") + " · " + status;
+        box.appendChild(row);
+      });
+    }
+    function drawDisc() {
+      const box = document.getElementById("disc-rows");
+      box.innerHTML = "";
+      if (!items.length) {
+        box.innerHTML = '<p class="lede">Discipline beats motivation. Pile it on here.</p>';
+        return;
+      }
+      items.filter((f) => !(f.kind === "once" && f.doneOn && !sameDay(f.doneOn, todayStamp()))).forEach((f) => {
+        const row = document.createElement("div");
+        row.className = "row";
+        row.innerHTML = '<div class="row-top"><div class="name"></div><div class="row-actions"><button type="button" class="ghost" data-edit>Edit</button><button type="button" class="ghost" data-drop>Remove</button></div></div><div class="meta"></div>';
+        row.querySelector(".name").textContent = f.name;
+        const kindLabel = ({once:"one time",daily:"daily",weekly:"weekly",monthly:"monthly","as-needed":"as needed"})[f.kind] || f.kind;
+        row.querySelector(".meta").textContent = kindLabel + (f.when ? " · " + f.when : "") + (sameDay(f.pushedOn, todayStamp()) ? " · pushed from yesterday" : "");
+        row.querySelector("[data-drop]").addEventListener("click", () => dropItem(f.id));
+        row.querySelector("[data-edit]").addEventListener("click", () => editItem(f.id));
+        box.appendChild(row);
+      });
+    }
+    function editItem(id) {
+      const f = items.find((x) => x.id === id);
+      if (!f) return;
+      editingId = id;
+      draft = f.name;
+      pendingKind = f.kind || "once";
+      pendingAnchors = (f.anchors || []).slice();
+      pendingClocks = (f.clocks || []).slice();
+      pendingNeeded = f.asNeeded || "";
+      pendingRemind = remindList(f);
+      document.getElementById("seed-text").value = f.name;
+      document.getElementById("kind-echo").textContent = f.name + ".";
+      show("place");
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-name").classList.add("on");
+    }
+    function dropItem(id) {
+      items = items.filter((x) => x.id !== id);
+      if (assignedId === id) assignedId = null;
+      persist();
+      assignFromPlate();
+      drawDisc();
+      drawPlate();
+      pruneSpentOnce();
+    settleOverdue();
+    knockAhead();
+    noteVisit();
+    askPhoneAlerts();
+    drawStart();
+    checkPokes();
+    setInterval(checkPokes, 20000);
+    }
+    function drawResults() {
+      settleOverdue();
+      const box = document.getElementById("result-rows");
+      const stamp = todayStamp();
+      const seen = new Set();
+      const rows = [];
+      items.forEach((f) => {
+        const key = (f.name || "").toLowerCase();
+        if (!key || seen.has(key)) return;
+        const done = sameDay(f.doneOn, stamp) || log.some((e) => e.name.toLowerCase() === key && (e.day === stamp || (e.at || "").slice(0,10) === new Date().toISOString().slice(0,10)));
+        const ignored = sameDay(f.ignoredOn, stamp);
+        const onPlate = onPlateToday(f) && !ignored && !done;
+        if (!onPlate && !done && !ignored) return;
+        seen.add(key);
+        rows.push({ id: f.id, name: f.name, done: done, ignored: ignored });
+      });
+      const doneN = rows.filter((e) => e.done).length;
+      const allN = rows.length;
+      const lab = document.getElementById("meter-label");
+      const fill = document.getElementById("meter-fill");
+      if (lab) lab.textContent = allN ? (doneN + " of " + allN + " off the plate today. Whoop whoop 🙌") : "Nothing off the plate yet.";
+      if (fill) fill.style.width = (allN ? Math.round(doneN / allN * 100) : 0) + "%";
+      box.innerHTML = "";
+      if (!rows.length) {
+        box.innerHTML = '<p class="lede">Nothing to celebrate yet. Begin one assigned thing.</p>';
+        return;
+      }
+      rows.forEach((e) => {
+        const row = document.createElement("div");
+        row.className = "row" + (e.done ? " strike" : "");
+        row.innerHTML = '<div class="row-top"><div class="name"></div></div><div class="meta"></div>';
+        row.querySelector(".name").textContent = e.name;
+        row.querySelector(".meta").textContent = e.done ? "Done" : (e.ignored ? "Ignored today" : "On the plate");
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ghost undo";
+        if (e.done || e.ignored) {
+          b.textContent = "Bring back";
+          b.addEventListener("click", () => undoDone(e.id));
+        } else {
+          b.textContent = "Mark done";
+          b.addEventListener("click", () => markDoneId(e.id));
+        }
+        row.querySelector(".row-top").appendChild(b);
+        box.appendChild(row);
+      });
+    }
+
+    function undoDone(id) {
+      const f = items.find((x) => x.id === id);
+      if (!f) return;
+      f.doneOn = "";
+      f.ignoredOn = "";
+      f.returnedOn = todayStamp();
+      log = log.filter((e) => !(e.name === f.name && (e.day === todayStamp() || (e.at || "").slice(0,10) === new Date().toISOString().slice(0,10))));
+      rememberOutcome(f, "undone");
+      window._pinAssign = f.id;
+      assignedId = f.id;
+      persist();
+      show("start");
+    }
+    function downloadTrain() {
+      const blob = new Blob([JSON.stringify({ train, log }, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "rewired-training.json";
+      a.click();
+    }
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
+    assignFromPlate();
+    updateBadge();
+    function repairItems() {
+      items.forEach((i) => {
+        const days = weekdaysFrom(i.when);
+        if (days.length >= 2) {
+          i.kind = i.kind === "daily" ? "daily" : "weekly";
+          if (!(i.anchors && i.anchors.length)) i.anchors = days;
+          return;
+        }
+        if ((i.kind === "weekly" || i.kind === "daily") && days.length === 1) {
+          if (!(i.anchors && i.anchors.length)) i.anchors = days;
+          return;
+        }
+        if (i.kind === "once" && days.length === 1) {
+          i.dueDate = stampForWeekday(WEEKDAYS.indexOf(days[0]));
+        }
+      });
+      persist();
+    }
+    repairItems();
+    pruneSpentOnce();
+    settleOverdue();
+    knockAhead();
+    noteVisit();
+    askPhoneAlerts();
+    drawStart();
+    checkPokes();
+    setInterval(checkPokes, 20000);
+    pingAI().then((on) => { if (on) assignWithAI(); });
+    setTimeout(askMissingAhead, 400);
+  </script>
+</body>
+</html>
