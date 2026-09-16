@@ -756,10 +756,13 @@
       const row = importDraft.shift();
       row.dueDate = resolveDue(row) || row.dueDate || "";
       row.kind = row.kind || "once";
-      row.aheadAsked = true;
-      fileImportRow(row);
-      if (!importDraft.length) show("disciplined");
-      else drawImport();
+      window._importHold = row;
+      pendingKind = row.kind;
+      pendingDue = row.dueDate || "";
+      pendingClocks = row.clocks || [];
+      pendingRemind = ["app"];
+      draft = row.name;
+      openAheadAsk(row.dueDate);
     }
     function ignoreOne() {
       if (!importDraft.length) return show("disciplined");
