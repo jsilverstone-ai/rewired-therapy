@@ -366,13 +366,14 @@
         </div>
       </div>
       <div class="step" id="s-ahead">
-        <p class="lede" id="ahead-ask">This sits until that day. Knock before it so it doesn’t vanish?</p>
-        <div class="choices">
-          <button type="button" class="ghost" onclick="setAhead(1)">1 day before</button>
-          <button type="button" class="ghost" onclick="setAhead(3)">3 days before</button>
-          <button type="button" class="ghost" onclick="setAhead(7)">1 week before</button>
-          <button type="button" class="quiet" onclick="setAhead(0)">Don’t knock early</button>
+        <p class="lede" id="ahead-ask">When should I knock before this?</p>
+        <div class="choices" id="ahead-units">
+          <button type="button" class="ghost" onclick="aheadUnit('min')">Minutes</button>
+          <button type="button" class="ghost" onclick="aheadUnit('hour')">Hours</button>
+          <button type="button" class="ghost" onclick="aheadUnit('day')">Days</button>
+          <button type="button" class="quiet" onclick="setAheadMin(0)">On the day</button>
         </div>
+        <div class="choices" id="ahead-amounts" style="display:none;margin-top:12px"></div>
       </div>
       <div class="step" id="s-clock">
         <p class="lede">AM or PM. Type the time.</p>
@@ -441,7 +442,10 @@
     <section class="screen" id="agent">
       <div class="topbar">
         <p class="kicker" style="display:flex;align-items:center;gap:6px;color:var(--bell)"><img src="data:image/png;base64,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" alt="" style="width:36px;height:36px;object-fit:contain" /> My Agent</p>
-        <button type="button" class="quiet" onclick="closeAgent()" style="min-height:36px;padding:0">Close</button>
+        <div style="display:flex;gap:16px;align-items:center">
+          <button type="button" class="quiet" onclick="clearAgentChat()" style="min-height:36px;padding:0">Clear chat</button>
+          <button type="button" class="quiet" onclick="closeAgent()" style="min-height:36px;padding:0">Close</button>
+        </div>
       </div>
       <p class="lede">This chat stays on this phone until you have an account.</p>
       <div class="agent-log" id="agent-log"></div>
@@ -739,14 +743,27 @@
         dueDate: r.dueDate || "",
         action: "Open it. Do the first physical step.",
         doneOn: "",
-        remind: ["app"]
+        remind: r.remind || ["app"],
+        remindAhead: r.remindAhead || 0,
+        remindAheadMin: r.remindAheadMin || 0
       });
       persist();
       assignFromPlate();
     }
     function keepOne() {
       if (!importDraft.length) return show("disciplined");
-      fileImportRow(importDraft.shift());
+      const row = importDraft.shift();
+      if (isFutureDue(row.kind || "once", row.dueDate, row.clocks)) {
+        window._importHold = row;
+        pendingKind = row.kind || "once";
+        pendingDue = row.dueDate || "";
+        pendingClocks = row.clocks || [];
+        pendingRemind = ["app"];
+        draft = row.name;
+        openAheadAsk(row.dueDate);
+        return;
+      }
+      fileImportRow(row);
       if (!importDraft.length) show("disciplined");
       else drawImport();
     }
@@ -941,18 +958,39 @@
       const db = new Date(bd[0], bd[1]-1, bd[2]);
       return Math.round((db - da) / 86400000);
     }
+    function aheadMinutesOf(i) {
+      if (typeof i.remindAheadMin === "number" && i.remindAheadMin > 0) return i.remindAheadMin;
+      if (i.remindAhead) return Number(i.remindAhead) * 1440;
+      return 0;
+    }
+    function itemEventMs(i) {
+      const due = i.dueDate || dueFromWhen(i.when);
+      const clock = (i.clocks && i.clocks[0]) || "";
+      return clockOnDay(due, clock);
+    }
     function knockAhead() {
       const stamp = todayStamp();
+      const now = Date.now();
       items.forEach((i) => {
-        if (i.kind !== "once" || i.doneOn || !i.remindAhead) return;
-        const left = daysUntil(i.dueDate);
-        if (left === i.remindAhead && i.aheadPing !== stamp) {
-          i.aheadPing = stamp;
-          window._aheadItem = i;
-          phonePing("Coming up", i.name + " is in " + left + " day" + (left===1?"":"s") + ".");
-        } else if (left === i.remindAhead && !window._aheadItem) {
-          window._aheadItem = i;
+        if (i.doneOn) return;
+        const ahead = aheadMinutesOf(i);
+        if (!ahead) return;
+        const when = itemEventMs(i);
+        if (!when || when <= now) return;
+        const start = when - ahead * 60000;
+        if (now < start) return;
+        if (i.aheadPing === stamp) {
+          if (!window._aheadItem) window._aheadItem = i;
+          return;
         }
+        i.aheadPing = stamp;
+        window._aheadItem = i;
+        const msLeft = when - now;
+        let label = "soon";
+        if (msLeft >= 36 * 3600000) label = Math.round(msLeft / 86400000) + " days";
+        else if (msLeft >= 90 * 60000) label = Math.round(msLeft / 3600000) + " hours";
+        else label = Math.max(1, Math.round(msLeft / 60000)) + " minutes";
+        phonePing("Coming up", i.name + " is in " + label + ".");
       });
       persist();
     }
@@ -1006,19 +1044,80 @@
       if (pendingRemind.includes("phone") && "Notification" in window && Notification.permission === "default") {
         Notification.requestPermission();
       }
-      const future = pendingKind === "once" && pendingDue && pendingDue !== todayStamp() && dayNum(pendingDue) > dayNum(todayStamp());
-      if (future) {
-        const ask = document.getElementById("ahead-ask");
-        if (ask) ask.textContent = "This sits until " + pendingDue + ". Knock before that day so it doesn’t fall off?";
-        document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
-        document.getElementById("s-ahead").classList.add("on");
+      if (isFutureDue(pendingKind, pendingDue, pendingClocks)) {
+        openAheadAsk(pendingDue);
         return;
       }
       finishPlace();
     }
-    function setAhead(days) {
-      pendingAhead = days;
+    function isFutureDue(kind, due, clocks) {
+      if (kind !== "once") return false;
+      const stamp = todayStamp();
+      if (due && dayNum(due) > dayNum(stamp)) return true;
+      if (due && due === stamp && clocks && clocks[0]) {
+        const ms = clockOnDay(due, clocks[0]);
+        return ms && ms > Date.now() + 20 * 60 * 1000;
+      }
+      return false;
+    }
+    function openAheadAsk(due) {
+      const ask = document.getElementById("ahead-ask");
+      if (ask) ask.textContent = due ? "When should I knock before " + due + "?" : "When should I knock before this?";
+      const box = document.getElementById("ahead-amounts");
+      if (box) { box.style.display = "none"; box.innerHTML = ""; }
+      document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+      document.getElementById("s-ahead").classList.add("on");
+      show("place");
+    }
+    function aheadUnit(unit) {
+      const box = document.getElementById("ahead-amounts");
+      if (!box) return;
+      const opts = unit === "min" ? [[15,"15 min"],[30,"30 min"],[60,"1 hour"]]
+        : unit === "hour" ? [[60,"1 hour"],[120,"2 hours"],[360,"6 hours"]]
+        : [[1440,"1"],[4320,"3"],[10080,"7"]];
+      box.style.display = "";
+      box.innerHTML = "";
+      opts.forEach(([mins, label]) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "ghost";
+        b.textContent = label;
+        b.onclick = () => setAheadMin(mins);
+        box.appendChild(b);
+      });
+    }
+    function setAheadMin(mins) {
+      pendingAheadMin = mins || 0;
+      pendingAhead = Math.round((mins || 0) / 1440);
+      if (window._importHold) {
+        const r = window._importHold;
+        window._importHold = null;
+        r.remindAheadMin = pendingAheadMin;
+        r.remindAhead = pendingAhead;
+        fileImportRow(r);
+        if (!importDraft.length) show("disciplined");
+        else { show("import"); drawImport(); }
+        return;
+      }
       finishPlace();
+    }
+    function setAhead(days) { setAheadMin((days || 0) * 1440); }
+    function clockOnDay(due, clock) {
+      if (!due) return 0;
+      const p = String(due).split("-").map(Number);
+      if (p.length < 3) return 0;
+      const dt = new Date(p[0], p[1]-1, p[2], 9, 0, 0);
+      const c = String(clock || "");
+      const tm = c.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (tm) {
+        let h = parseInt(tm[1], 10);
+        const m = parseInt(tm[2], 10);
+        const ap = tm[3].toUpperCase();
+        if (ap === "PM" && h < 12) h += 12;
+        if (ap === "AM" && h === 12) h = 0;
+        dt.setHours(h, m, 0, 0);
+      }
+      return dt.getTime();
     }
     function parseTypedClock(raw) {
       const s = String(raw || "").replace(/[^0-9]/g, "");
@@ -1140,6 +1239,12 @@
       catch (e) { return []; }
     }
     function saveAgentThread(rows) { localStorage.setItem("rewired-agent", JSON.stringify(rows.slice(-40))); }
+    function clearAgentChat() {
+      localStorage.removeItem("rewired-agent");
+      const offer = document.getElementById("agent-offer");
+      if (offer) { offer.style.display = "none"; offer.innerHTML = ""; }
+      drawAgent();
+    }
     function drawAgent() {
       const log = document.getElementById("agent-log");
       if (!log) return;
@@ -1327,6 +1432,7 @@
     let pendingAnchors = [];
     let pendingClocks = [];
     let pendingAhead = 0;
+    let pendingAheadMin = 0;
     let pendingNeeded = "";
     function stepScroll(kind) {
       pendingKind = kind;
@@ -1436,6 +1542,7 @@
         remind: pendingRemind,
         dueDate: pendingKind === "once" ? (pendingDue || todayStamp()) : "",
         remindAhead: pendingAhead || 0,
+        remindAheadMin: pendingAheadMin || 0,
         when: whenBits.join(" · "),
         action: window._autoStep || "Dopamine is on the other side of done. How good will that feel?",
         doneOn: ""
@@ -1636,8 +1743,13 @@
         if (bar) bar.style.display = "none";
         return;
       }
-      const left = daysUntil(item.dueDate);
-      if (copy) copy.textContent = item.name + " is in " + left + " day" + (left===1?"":"s") + ". Need a first step before that day?";
+      const when = itemEventMs(item);
+      const msLeft = when ? when - Date.now() : 0;
+      let label = "soon";
+      if (msLeft >= 36 * 3600000) label = Math.round(msLeft / 86400000) + " days";
+      else if (msLeft >= 90 * 60000) label = Math.round(msLeft / 3600000) + " hours";
+      else if (msLeft > 0) label = Math.max(1, Math.round(msLeft / 60000)) + " minutes";
+      if (copy) copy.textContent = item.name + " is in " + label + ". Need a first step before then?";
       if (poke) poke.classList.add("on");
       if (bar) bar.style.display = "";
       if (late) late.style.display = "none";
