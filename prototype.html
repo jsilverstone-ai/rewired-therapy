@@ -745,7 +745,8 @@
         doneOn: "",
         remind: r.remind || ["app"],
         remindAhead: r.remindAhead || 0,
-        remindAheadMin: r.remindAheadMin || 0
+        remindAheadMin: r.remindAheadMin || 0,
+        aheadAsked: !!r.aheadAsked
       });
       persist();
       assignFromPlate();
@@ -753,7 +754,8 @@
     function keepOne() {
       if (!importDraft.length) return show("disciplined");
       const row = importDraft.shift();
-      if (isFutureDue(row.kind || "once", row.dueDate, row.clocks)) {
+      row.dueDate = resolveDue(row) || row.dueDate || "";
+      if (isFutureItem(row)) {
         window._importHold = row;
         pendingKind = row.kind || "once";
         pendingDue = row.dueDate || "";
@@ -763,6 +765,7 @@
         openAheadAsk(row.dueDate);
         return;
       }
+      row.aheadAsked = true;
       fileImportRow(row);
       if (!importDraft.length) show("disciplined");
       else drawImport();
@@ -1050,15 +1053,45 @@
       }
       finishPlace();
     }
+    function stampFromParts(y, m, d) {
+      return y + "-" + pad2(m) + "-" + pad2(d);
+    }
+    function resolveDue(row) {
+      if (!row) return "";
+      if (row.dueDate && dayNum(row.dueDate)) return row.dueDate;
+      const blob = [row.dueDate, row.when, row.name].filter(Boolean).join(" ");
+      const slash = blob.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b/);
+      if (slash) {
+        let y = parseInt(slash[3], 10);
+        if (y < 100) y += 2000;
+        return stampFromParts(y, parseInt(slash[1], 10), parseInt(slash[2], 10));
+      }
+      const cleaned = String(row.when || "").replace(/·/g, " ");
+      return dueFromWhen(cleaned);
+    }
     function isFutureDue(kind, due, clocks) {
-      if (kind !== "once") return false;
       const stamp = todayStamp();
       if (due && dayNum(due) > dayNum(stamp)) return true;
-      if (due && due === stamp && clocks && clocks[0]) {
+      if (due && dayNum(due) === dayNum(stamp) && clocks && clocks[0]) {
         const ms = clockOnDay(due, clocks[0]);
-        return ms && ms > Date.now() + 20 * 60 * 1000;
+        return ms && ms > Date.now() + 10 * 60 * 1000;
       }
       return false;
+    }
+    function isFutureItem(row) {
+      const due = resolveDue(row);
+      return isFutureDue(row && row.kind, due, row && row.clocks);
+    }
+    function askMissingAhead() {
+      if (window._importHold) return;
+      const hit = items.find((i) => !i.doneOn && !i.aheadAsked && isFutureItem(i));
+      if (!hit) return;
+      window._importHold = hit;
+      pendingKind = hit.kind || "once";
+      pendingDue = resolveDue(hit);
+      pendingClocks = hit.clocks || [];
+      draft = hit.name;
+      openAheadAsk(pendingDue);
     }
     function openAheadAsk(due) {
       const ask = document.getElementById("ahead-ask");
@@ -1094,9 +1127,18 @@
         window._importHold = null;
         r.remindAheadMin = pendingAheadMin;
         r.remindAhead = pendingAhead;
-        fileImportRow(r);
-        if (!importDraft.length) show("disciplined");
-        else { show("import"); drawImport(); }
+        r.aheadAsked = true;
+        if (r.id && items.some((x) => x.id === r.id)) {
+          const i = items.find((x) => x.id === r.id);
+          i.remindAheadMin = pendingAheadMin;
+          i.remindAhead = pendingAhead;
+          i.aheadAsked = true;
+          persist();
+        } else {
+          fileImportRow(r);
+        }
+        if (importDraft.length) { show("import"); drawImport(); }
+        else show("disciplined");
         return;
       }
       finishPlace();
@@ -1543,6 +1585,7 @@
         dueDate: pendingKind === "once" ? (pendingDue || todayStamp()) : "",
         remindAhead: pendingAhead || 0,
         remindAheadMin: pendingAheadMin || 0,
+        aheadAsked: true,
         when: whenBits.join(" · "),
         action: window._autoStep || "Dopamine is on the other side of done. How good will that feel?",
         doneOn: ""
@@ -1967,6 +2010,7 @@
     checkPokes();
     setInterval(checkPokes, 20000);
     pingAI().then((on) => { if (on) assignWithAI(); });
+    setTimeout(askMissingAhead, 400);
   </script>
 </body>
 </html>
