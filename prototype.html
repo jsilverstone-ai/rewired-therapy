@@ -646,7 +646,7 @@
           importDraft.push({
             source: "calendar",
             name: name,
-            kind: ev.recurringEventId ? "weekly" : "once",
+            kind: "once",
             when: dt && !isNaN(dt.getTime()) ? dt.toLocaleString() : "",
             start: start,
             dueDate: due,
@@ -737,7 +737,7 @@
         id: uid(),
         name: r.name,
         kind: r.kind || "once",
-        anchors: [],
+        anchors: r.anchors || [],
         clocks: r.clocks || [],
         when: r.when || "",
         dueDate: r.dueDate || "",
@@ -791,8 +791,12 @@
       if (keep.length !== items.length) items = keep;
       items.forEach((i) => {
         if (i.kind !== "once" || i.doneOn) return;
-        const due = i.dueDate || dueFromWhen(i.when);
-        if (!due || dayNum(due) < dayNum(stamp)) {
+        const due = inferDue(i);
+        if (due && dayNum(due) > dayNum(stamp)) {
+          i.dueDate = due;
+          return;
+        }
+        if (due && dayNum(due) < dayNum(stamp)) {
           i.dueDate = stamp;
           i.ignoredOn = "";
           i.pushedOn = stamp;
@@ -830,18 +834,22 @@
     function onPlateToday(item) {
       const stamp = todayStamp();
       const d = new Date();
+      const todayName = WEEKDAYS[d.getDay()];
       const anchors = item.anchors || (item.anchor ? [item.anchor] : []);
+      const due = inferDue(item);
       if (item.kind === "once") {
         if (item.doneOn && sameDay(item.doneOn, stamp)) return false;
-        const due = item.dueDate || dueFromWhen(item.when);
-        if (!due) return true;
-        return sameDay(due, stamp);
+        if (due) return sameDay(due, stamp);
+        if (namedWeekday(item.when || item.name)) return false;
+        return true;
       }
-      if (item.kind === "daily") return item.doneOn !== stamp && (anchors.length ? anchors.includes(WEEKDAYS[d.getDay()]) : true);
+      if (due && dayNum(due) > dayNum(stamp)) return false;
+      if (item.kind === "daily") return item.doneOn !== stamp && (anchors.length ? anchors.includes(todayName) : true);
       if (item.kind === "weekly") {
         if (item.doneOn && sameDay(item.doneOn, stamp)) return false;
-        if (!anchors.length) return true;
-        return anchors.includes(WEEKDAYS[d.getDay()]);
+        if (anchors.length) return anchors.includes(todayName);
+        if (due) return sameDay(due, stamp);
+        return false;
       }
       if (item.kind === "monthly") {
         if (item.doneOn === stamp) return false;
@@ -894,11 +902,44 @@
     setInterval(checkPokes, 20000);
     }
     function dueFromWhen(when) {
-      if (!when || /[·]|Monday|Tuesday|weekly|daily/i.test(when)) return "";
-      const d = new Date(when);
-      if (isNaN(d.getTime())) return "";
-      if (d.getFullYear() < 2020) return "";
+      const raw = String(when || "").replace(/·/g, " ");
+      if (!raw.trim()) return "";
+      const iso = raw.match(/\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/);
+      if (iso) return stampFromParts(parseInt(iso[1],10), parseInt(iso[2],10), parseInt(iso[3],10));
+      const slash = raw.match(/\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b/);
+      if (slash) {
+        let y = parseInt(slash[3], 10);
+        if (y < 100) y += 2000;
+        return stampFromParts(y, parseInt(slash[1], 10), parseInt(slash[2], 10));
+      }
+      const long = raw.match(/\b((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:,?\s+\d{4})?)/i);
+      if (long) {
+        const d = new Date(long[1]);
+        if (!isNaN(d.getTime()) && d.getFullYear() >= 2020) {
+          return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+        }
+      }
+      const named = namedWeekday(raw);
+      if (named != null) return stampForWeekday(named);
+      return "";
+    }
+    function namedWeekday(text) {
+      const raw = String(text || "");
+      for (let i = 0; i < WEEKDAYS.length; i++) {
+        if (new RegExp("\\b" + WEEKDAYS[i] + "s?\\b", "i").test(raw)) return i;
+      }
+      return null;
+    }
+    function stampForWeekday(idx) {
+      const d = new Date();
+      const diff = (idx - d.getDay() + 7) % 7;
+      d.setDate(d.getDate() + diff);
       return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
+    }
+    function inferDue(item) {
+      if (!item) return "";
+      if (item.dueDate && dayNum(item.dueDate)) return item.dueDate;
+      return resolveDue(item) || dueFromWhen(item.when) || dueFromWhen(item.name);
     }
     function sameDay(a, b) {
       const n = (s) => {
@@ -971,9 +1012,30 @@
       const clock = (i.clocks && i.clocks[0]) || "";
       return clockOnDay(due, clock);
     }
+    function pickAheadItem() {
+      const stamp = todayStamp();
+      const now = Date.now();
+      let best = null;
+      let bestDays = 999;
+      items.forEach((i) => {
+        if (i.doneOn || i.aheadDismiss === stamp) return;
+        if (onPlateToday(i)) return;
+        const due = inferDue(i);
+        if (!due || dayNum(due) <= dayNum(stamp)) return;
+        const days = daysUntil(due);
+        const ahead = aheadMinutesOf(i);
+        const when = itemEventMs(i) || clockOnDay(due, (i.clocks && i.clocks[0]) || "9:00 AM");
+        const inWindow = ahead ? (when && now >= when - ahead * 60000 && now < when) : (days >= 1 && days <= 7);
+        if (!inWindow) return;
+        if (days < bestDays) { best = i; bestDays = days; }
+      });
+      return best;
+    }
     function knockAhead() {
       const stamp = todayStamp();
       const now = Date.now();
+      const picked = pickAheadItem();
+      if (picked && !window._aheadItem) window._aheadItem = picked;
       items.forEach((i) => {
         if (i.doneOn) return;
         const ahead = aheadMinutesOf(i);
@@ -1692,6 +1754,10 @@
           return;
         }
       }
+      if (window._aheadItem && window._aheadItem.aheadDismiss !== todayStamp()) {
+        paintAhead();
+        return;
+      }
       box.classList.remove("on");
     }
     function pokeHere() {
@@ -1757,6 +1823,8 @@
         if (pile) pile.style.display = "";
         const cloud = document.getElementById("btn-cloud");
         if (cloud) cloud.style.display = cloudCfg().key ? "none" : "";
+        knockAhead();
+        paintAhead();
         return;
       }
       begin.style.display = "";
@@ -2001,6 +2069,18 @@
     if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js");
     assignFromPlate();
     updateBadge();
+    function repairItems() {
+      const stamp = todayStamp();
+      items.forEach((i) => {
+        const due = inferDue(i);
+        if (due) i.dueDate = due;
+        if (i.kind === "weekly" && due && dayNum(due) > dayNum(stamp) && !(i.anchors && i.anchors.length)) {
+          i.kind = "once";
+        }
+      });
+      persist();
+    }
+    repairItems();
     pruneSpentOnce();
     settleOverdue();
     knockAhead();
