@@ -146,26 +146,107 @@
     }
     .pick.on, button.ghost.on { background: var(--paper-2); }
     .step { display: none; } .step.on { display: block; }
-    .poke { display: none; padding: 0 0 16px; }
-    .poke.on { display: block; }
+    .poke { display: none; padding: 8px 0 8px; }
+    .poke.on { display: flex; justify-content: center; }
+    .bubble {
+      max-width: 80%;
+      background: #EFE8DE;
+      color: var(--bell);
+      border-radius: 22px;
+      padding: 16px 22px;
+      font-size: 18px;
+      font-weight: 500;
+      text-align: center;
+      line-height: 1.35;
+      position: relative;
+    }
+    #poke-ahead { margin: 12px 0 20px; }
+    #poke-ahead .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    #poke-ahead button {
+      background: transparent;
+      color: var(--bell);
+      border: 1px solid var(--bell);
+    }
+    .bubble:after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -8px;
+      margin-left: -8px;
+      border: 8px solid transparent;
+      border-top-color: #EFE8DE;
+      border-bottom: 0;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 16px;
+    }
+    .topbar .kicker { margin-bottom: 0; }
+    .topbar .lede { margin-top: 0; font-size: 13px; }
+
+    .chrome {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 24px 0;
+    }
+    .chrome.hide { display: none; }
+    .agent-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 0;
+      color: var(--bell);
+      min-height: 36px;
+      padding: 0;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .agent-btn svg { width: 24px; height: 24px; stroke: var(--bell); fill: none; stroke-width: 1.5; }
+    .agent-log { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 8px 0 16px; }
+    .msg { max-width: 85%; padding: 12px 14px; border-radius: 16px; font-size: 16px; line-height: 1.4; }
+    .msg.bot { align-self: flex-start; background: #EFE8DE; color: var(--ink); }
+    .msg.me { align-self: flex-end; background: var(--bell); color: var(--paper); }
+    .agent-offer { border: 1px solid var(--bell); border-radius: 8px; padding: 12px; color: var(--bell); }
+    .agent-compose { display: flex; gap: 8px; align-items: center; padding-top: 8px; }
+    .agent-compose input {
+      flex: 1; margin: 0; font-size: 16px; min-height: 48px;
+    }
+    .agent-compose button { min-height: 48px; padding: 8px 12px; font-size: 11px; }
+    .agent-compose button.ghost { color: var(--bell); border-color: var(--bell); }
+    .tab-ico { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.6; }
+    .tabs button .tab-ico { margin-bottom: 2px; }
   </style>
 </head>
 <body>
   <div class="app">
+    <div class="chrome" id="chrome">
+      <p class="kicker" id="chrome-left">Begin here</p>
+      <button type="button" class="agent-btn" onclick="window._agentBack=document.querySelector('.screen.on').id;show('agent')"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15c-1.5-1-2-3-1-5 0-2 2-4 5-4 2 0 3 .8 4 2 1.2-.4 3 .4 3.2 2 .8.3 1.6 1.4 1.3 2.6-.3 1.4-1.5 2.2-3 2.2H9c-1 0-1.6-.3-2-.8z"/><path d="M9 10.5c.3 1 .8 1.6 1.6 2M13 10c.4 1.2.5 2 .2 3"/><path d="M8 8.2c.6-1.4 2-2.2 3.6-2.2"/><path d="M7.5 5.2h8.5c.4 0 .8.2 1 .5l.7 1.1H6.6l.6-1.1c.2-.3.6-.5 1-.5z"/><path d="M9.2 5.2l.6-1.3h3.6l.6 1.3"/><path d="M15.6 4.2l1.4-1.6"/></svg><span>My Agent</span></button>
+    </div>
     <section class="screen on" id="start">
+      <p class="lede" id="ai-status"></p>
       <div class="poke" id="poke">
-        <p class="lede" id="poke-copy"></p>
-        <div id="poke-late" style="display:none">
-          <div class="choices">
-            <button type="button" class="ghost" onclick="markDone()">Complete</button>
-            <button type="button" class="quiet" onclick="ignoreToday()">Ignore today</button>
-          </div>
+        <div class="bubble" id="poke-copy"></div>
+      </div>
+      <div id="poke-ahead" style="display:none">
+        <div class="choices">
+          <button type="button" class="ghost" onclick="aheadYes()">Yes, add a step</button>
+          <button type="button" class="quiet" onclick="aheadNo()">Not now</button>
         </div>
       </div>
-      <p class="kicker">Begin here</p>
-      <p class="lede" id="ai-status"></p>
-      <h1 id="start-title">Let’s get this done now.</h1>
-      <p class="lede" id="start-lede">Discipline beats motivation. Later can wait.</p>
+      <div id="poke-late" style="display:none">
+        <div class="choices">
+          <button type="button" class="ghost" onclick="markDone()">Complete</button>
+          <button type="button" class="quiet" onclick="ignoreToday()">Ignore today</button>
+        </div>
+      </div>
+      <h1 id="start-title">Let’s do it.</h1>
+      <p class="lede" id="start-lede">This is where the day starts.</p>
       <p class="act" id="start-act"></p>
       <div class="actions">
         <button type="button" id="btn-begin" onclick="markDone()">Mark as done</button>
@@ -284,6 +365,15 @@
           <button type="button" onclick="saveRemind()">Done</button>
         </div>
       </div>
+      <div class="step" id="s-ahead">
+        <p class="lede" id="ahead-ask">This sits until that day. Knock before it so it doesn’t vanish?</p>
+        <div class="choices">
+          <button type="button" class="ghost" onclick="setAhead(1)">1 day before</button>
+          <button type="button" class="ghost" onclick="setAhead(3)">3 days before</button>
+          <button type="button" class="ghost" onclick="setAhead(7)">1 week before</button>
+          <button type="button" class="quiet" onclick="setAhead(0)">Don’t knock early</button>
+        </div>
+      </div>
       <div class="step" id="s-clock">
         <p class="lede">AM or PM. Type the time.</p>
         <div id="ampm-choices"></div>
@@ -347,11 +437,26 @@
       </div>
     </section>
 
+    
+    <section class="screen" id="agent">
+      <div class="topbar">
+        <p class="kicker" style="display:flex;align-items:center;gap:6px;color:var(--bell)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15c-1.5-1-2-3-1-5 0-2 2-4 5-4 2 0 3 .8 4 2 1.2-.4 3 .4 3.2 2 .8.3 1.6 1.4 1.3 2.6-.3 1.4-1.5 2.2-3 2.2H9c-1 0-1.6-.3-2-.8z"/><path d="M9 10.5c.3 1 .8 1.6 1.6 2M13 10c.4 1.2.5 2 .2 3"/><path d="M8 8.2c.6-1.4 2-2.2 3.6-2.2"/><path d="M7.5 5.2h8.5c.4 0 .8.2 1 .5l.7 1.1H6.6l.6-1.1c.2-.3.6-.5 1-.5z"/><path d="M9.2 5.2l.6-1.3h3.6l.6 1.3"/><path d="M15.6 4.2l1.4-1.6"/></svg> My Agent</p>
+        <button type="button" class="quiet" onclick="closeAgent()" style="min-height:36px;padding:0">Close</button>
+      </div>
+      <p class="lede">This chat stays on this phone until you have an account.</p>
+      <div class="agent-log" id="agent-log"></div>
+      <div class="agent-offer" id="agent-offer" style="display:none"></div>
+      <div class="agent-compose">
+        <input id="agent-text" type="text" placeholder="Talk. Don’t dump a chart." autocomplete="off" />
+        <button type="button" class="ghost" onclick="speakAgent()">Speak</button>
+        <button type="button" onclick="sendAgent()">Send</button>
+      </div>
+    </section>
     <nav class="tabs">
-      <button class="on" type="button" onclick="show('start')"><span class="tab-mark"></span>Begin</button>
-      <button type="button" onclick="show('plate')"><span class="tab-mark"><span class="badge" id="plate-badge"></span></span>Plate</button>
-      <button type="button" onclick="show('disciplined')"><span class="tab-mark"></span>Pile</button>
-      <button type="button" onclick="show('results')"><span class="tab-mark"></span>Results</button>
+      <button class="on" type="button" onclick="show('start')"><svg class="tab-ico" viewBox="0 0 24 24"><path d="M4 11.5L12 5l8 6.5"/><path d="M7 11v8h10v-8"/><path d="M10 19v-5h4v5"/></svg>Begin</button>
+      <button type="button" onclick="show('plate')"><span class="tab-mark"><span class="badge" id="plate-badge"></span></span><svg class="tab-ico" viewBox="0 0 24 24"><path d="M5 5v7"/><path d="M3.8 5v4c0 1.4.9 2 1.2 2"/><path d="M6.2 5v4c0 1.4-.9 2-1.2 2"/><circle cx="13" cy="12" r="4.2"/><path d="M20 5v10"/><path d="M18.7 15h2.6"/></svg>Plate</button>
+      <button type="button" onclick="show('disciplined')"><svg class="tab-ico" viewBox="0 0 24 24"><path d="M6 16l6-3 6 3-6 3z"/><path d="M6 12l6-3 6 3"/><path d="M6 8l6-3 6 3"/></svg>Pile</button>
+      <button type="button" onclick="show('results')"><svg class="tab-ico" viewBox="0 0 24 24"><path d="M6 18V10M12 18V6M18 18v-7"/></svg>Results</button>
     </nav>
   </div>
   <script>
@@ -441,6 +546,7 @@
           persist();
           pruneSpentOnce();
     settleOverdue();
+    knockAhead();
     noteVisit();
     askPhoneAlerts();
     drawStart();
@@ -748,6 +854,7 @@
       if (cur) writeFirstStep(cur);
       pruneSpentOnce();
     settleOverdue();
+    knockAhead();
     noteVisit();
     askPhoneAlerts();
     drawStart();
@@ -811,6 +918,32 @@
       });
       persist();
     }
+    function daysUntil(due) {
+      if (!due) return 999;
+      const a = dayNum(todayStamp());
+      const b = dayNum(due);
+      if (!a || !b) return 999;
+      const ad = String(todayStamp()).split("-").map(Number);
+      const bd = String(due).split("-").map(Number);
+      const da = new Date(ad[0], ad[1]-1, ad[2]);
+      const db = new Date(bd[0], bd[1]-1, bd[2]);
+      return Math.round((db - da) / 86400000);
+    }
+    function knockAhead() {
+      const stamp = todayStamp();
+      items.forEach((i) => {
+        if (i.kind !== "once" || i.doneOn || !i.remindAhead) return;
+        const left = daysUntil(i.dueDate);
+        if (left === i.remindAhead && i.aheadPing !== stamp) {
+          i.aheadPing = stamp;
+          window._aheadItem = i;
+          phonePing("Coming up", i.name + " is in " + left + " day" + (left===1?"":"s") + ".");
+        } else if (left === i.remindAhead && !window._aheadItem) {
+          window._aheadItem = i;
+        }
+      });
+      persist();
+    }
     function nextInLine() {
       const list = chronoPlate();
       if (!list.length) return null;
@@ -861,6 +994,18 @@
       if (pendingRemind.includes("phone") && "Notification" in window && Notification.permission === "default") {
         Notification.requestPermission();
       }
+      const future = pendingKind === "once" && pendingDue && pendingDue !== todayStamp() && dayNum(pendingDue) > dayNum(todayStamp());
+      if (future) {
+        const ask = document.getElementById("ahead-ask");
+        if (ask) ask.textContent = "This sits until " + pendingDue + ". Knock before that day so it doesn’t fall off?";
+        document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
+        document.getElementById("s-ahead").classList.add("on");
+        return;
+      }
+      finishPlace();
+    }
+    function setAhead(days) {
+      pendingAhead = days;
       finishPlace();
     }
     function parseTypedClock(raw) {
@@ -957,15 +1102,102 @@
     function show(id) {
       document.querySelectorAll(".screen").forEach((s) => s.classList.remove("on"));
       document.getElementById(id).classList.add("on");
-      const map = { start: "Begin", doing: "Begin", plate: "On my plate", disciplined: "Pile it on", place: "Pile it on", import: "Pile it on", results: "The Results", settings: "The Results" };
-      document.querySelectorAll(".tabs button").forEach((t) => t.classList.toggle("on", t.textContent === map[id]));
+      const map = { start: "Begin", doing: "Begin", plate: "On my plate", disciplined: "Pile it on", place: "Pile it on", import: "Pile it on", results: "The Results", settings: "The Results", agent: "" };
+      const left = { start: "Begin here", doing: "Begin here", plate: "On my plate", disciplined: "Pile it on", place: "Pile it on", import: "From Google", results: "The Results", settings: "Cloud model", agent: "My Agent" };
+      const chrome = document.getElementById("chrome");
+      const chromeLeft = document.getElementById("chrome-left");
+      if (chrome) chrome.classList.toggle("hide", id === "agent");
+      if (chromeLeft) chromeLeft.textContent = left[id] || "";
+      document.querySelectorAll(".tabs button").forEach((btn) => {
+        const label = (btn.textContent || "").replace(/\s+/g, " ").trim();
+        const want = map[id] || "";
+        btn.classList.toggle("on", label.indexOf(want) >= 0 && want !== "");
+      });
       if (id === "start") drawStart();
       if (id === "plate") drawPlate();
       if (id === "disciplined") drawDisc();
       if (id === "results") drawResults();
       if (id === "settings") drawSettings();
+      if (id === "agent") drawAgent();
       if (id === "place" && !editingId) resetPlace();
       updateBadge();
+    }
+    function closeAgent() { show(window._agentBack || "start"); }
+    function agentThread() {
+      try { return JSON.parse(localStorage.getItem("rewired-agent") || "[]"); }
+      catch (e) { return []; }
+    }
+    function saveAgentThread(rows) { localStorage.setItem("rewired-agent", JSON.stringify(rows.slice(-40))); }
+    function drawAgent() {
+      const log = document.getElementById("agent-log");
+      if (!log) return;
+      log.innerHTML = "";
+      const rows = agentThread();
+      if (!rows.length) {
+        const d = document.createElement("div");
+        d.className = "msg bot";
+        d.textContent = "You’ve got a day on Begin. Talk. Nothing goes on the pile unless you say add it.";
+        log.appendChild(d);
+      }
+      rows.forEach((r) => {
+        const d = document.createElement("div");
+        d.className = "msg " + (r.role === "user" ? "me" : "bot");
+        d.textContent = r.text;
+        log.appendChild(d);
+      });
+      log.scrollTop = log.scrollHeight;
+    }
+    function agentContext() {
+      const names = items.map((i) => i.name + (i.when ? " (" + i.when + ")" : "")).slice(0, 20).join("; ");
+      const now = assigned();
+      return "Caretaker for Rewired Therapy. The human is the Tamagotchi; you check in. Short sentences. Do not ask for medical records, charts, or diagnoses. Do not invent tasks unless they ask. If they want a task added, end with exactly one line: TASK: the name. Today on the pile: " + (names || "empty") + ". Begin now: " + (now ? now.name : "nothing") + ".";
+    }
+    async function sendAgent() {
+      const box = document.getElementById("agent-text");
+      const text = ((box && box.value) || "").trim();
+      if (!text) return;
+      if (box) box.value = "";
+      const rows = agentThread();
+      rows.push({ role: "user", text: text, at: Date.now() });
+      saveAgentThread(rows);
+      drawAgent();
+      const offer = document.getElementById("agent-offer");
+      if (offer) { offer.style.display = "none"; offer.innerHTML = ""; }
+      const reply = await askKeeper(text, agentContext());
+      const clean = String(reply || "I’m here.").replace(/TASK:\s*(.+)$/im, (m, name) => {
+        paintAgentOffer(name.trim());
+        return "";
+      }).trim();
+      rows.push({ role: "agent", text: clean || "I’m here.", at: Date.now() });
+      saveAgentThread(rows);
+      drawAgent();
+    }
+    function paintAgentOffer(name) {
+      const offer = document.getElementById("agent-offer");
+      if (!offer || !name) return;
+      offer.style.display = "";
+      offer.innerHTML = "Add to pile: " + name + ' <button type="button" class="ghost undo" onclick="agentAddPile(\'' + name.replace(/'/g, "") + '\')">Add to pile</button> <button type="button" class="quiet undo" onclick="this.parentNode.style.display=\'none\'">Not now</button>';
+    }
+    function agentAddPile(name) {
+      draft = name;
+      editingId = null;
+      const offer = document.getElementById("agent-offer");
+      if (offer) offer.style.display = "none";
+      show("place");
+      const seed = document.getElementById("seed-text");
+      if (seed) seed.value = name;
+    }
+    function speakAgent() {
+      const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!Rec) return;
+      const rec = new Rec();
+      rec.lang = "en-US";
+      rec.onresult = (e) => {
+        const said = (e.results[0] && e.results[0][0] && e.results[0][0].transcript) || "";
+        const box = document.getElementById("agent-text");
+        if (box) box.value = ((box.value || "") + " " + said).trim();
+      };
+      rec.start();
     }
 
     function resetPlace() {
@@ -1082,6 +1314,7 @@
     }
     let pendingAnchors = [];
     let pendingClocks = [];
+    let pendingAhead = 0;
     let pendingNeeded = "";
     function stepScroll(kind) {
       pendingKind = kind;
@@ -1190,6 +1423,7 @@
         asNeeded: pendingNeeded,
         remind: pendingRemind,
         dueDate: pendingKind === "once" ? (pendingDue || todayStamp()) : "",
+        remindAhead: pendingAhead || 0,
         when: whenBits.join(" · "),
         action: window._autoStep || "Dopamine is on the other side of done. How good will that feel?",
         doneOn: ""
@@ -1331,6 +1565,7 @@
       assignFromPlate();
       pruneSpentOnce();
     settleOverdue();
+    knockAhead();
     noteVisit();
     askPhoneAlerts();
     drawStart();
@@ -1349,8 +1584,8 @@
       const begin = document.getElementById("btn-begin");
       const next = document.getElementById("btn-next");
       if (!f) {
-        document.getElementById("start-title").textContent = "Let’s get this done now.";
-        document.getElementById("start-lede").textContent = "Discipline beats motivation. Later can wait.";
+        document.getElementById("start-title").textContent = "Let’s do it.";
+        document.getElementById("start-lede").textContent = "Nothing on the plate yet.";
         document.getElementById("start-act").textContent = "";
         begin.style.display = "none";
         next.style.display = "none";
@@ -1373,12 +1608,43 @@
       const line = chronoPlate();
       const idx = line.findIndex((x) => x.id === f.id);
       const upcoming = line[idx + 1];
-      const done = lastDoneName();
-      const avg = avgResponse();
-      let lede = upcoming ? ("Next after this: " + upcoming.name) : "This is next.";
-      document.getElementById("start-title").textContent = f.name + ".";
-      document.getElementById("start-lede").textContent = lede;
-      document.getElementById("start-act").textContent = f.action || "Don’t wait for urgency. Let’s just do it.";
+      const clock = (f.clocks && f.clocks[0]) || (parseClock(f.when) !== null ? (String(f.when).match(/(\d{1,2}:\d{2}\s*(AM|PM))/i) || [""])[0] : "");
+      document.getElementById("start-title").textContent = f.name + (clock ? " · " + clock : ".");
+      document.getElementById("start-lede").textContent = upcoming ? ("After this: " + upcoming.name) : "Let’s do it.";
+      document.getElementById("start-act").textContent = f.action || "";
+      paintAhead();
+    }
+    function paintAhead() {
+      const poke = document.getElementById("poke");
+      const copy = document.getElementById("poke-copy");
+      const bar = document.getElementById("poke-ahead");
+      const late = document.getElementById("poke-late");
+      const item = window._aheadItem;
+      if (!item || item.aheadDismiss === todayStamp()) {
+        if (bar) bar.style.display = "none";
+        return;
+      }
+      const left = daysUntil(item.dueDate);
+      if (copy) copy.textContent = item.name + " is in " + left + " day" + (left===1?"":"s") + ". Need a first step before that day?";
+      if (poke) poke.classList.add("on");
+      if (bar) bar.style.display = "";
+      if (late) late.style.display = "none";
+    }
+    function aheadNo() {
+      if (window._aheadItem) window._aheadItem.aheadDismiss = todayStamp();
+      persist();
+      window._aheadItem = null;
+      document.getElementById("poke").classList.remove("on");
+      document.getElementById("poke-ahead").style.display = "none";
+    }
+    function aheadYes() {
+      const item = window._aheadItem;
+      aheadNo();
+      if (!item) return;
+      editingId = null;
+      draft = "Prepare for " + item.name;
+      document.getElementById("seed-text").value = draft;
+      show("place");
     }
     function parkAssigned() {
       rememberOutcome(assigned(), "parked");
@@ -1396,6 +1662,7 @@
       if (plate[0]) { assignedId = plate[0].id; persist(); }
       pruneSpentOnce();
     settleOverdue();
+    knockAhead();
     noteVisit();
     askPhoneAlerts();
     drawStart();
@@ -1489,6 +1756,7 @@
       drawPlate();
       pruneSpentOnce();
     settleOverdue();
+    knockAhead();
     noteVisit();
     askPhoneAlerts();
     drawStart();
@@ -1568,6 +1836,7 @@
     updateBadge();
     pruneSpentOnce();
     settleOverdue();
+    knockAhead();
     noteVisit();
     askPhoneAlerts();
     drawStart();
