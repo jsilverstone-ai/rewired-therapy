@@ -733,7 +733,7 @@
         kind: r.kind || "once",
         anchors: r.anchors || [],
         clocks: r.clocks || [],
-        when: r.when || "",
+        when: prettyText([prettyDate(r.dueDate || r.when), (r.clocks && r.clocks[0]) || ""].filter(Boolean).join(" · ")) || r.when || "",
         dueDate: r.dueDate || "",
         action: "Open it. Do the first physical step.",
         doneOn: "",
@@ -960,14 +960,19 @@
       }
       return s;
     }
+    function prettyText(s) {
+      return String(s || "").replace(/\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/g, function (_, y, m, d) {
+        return parseInt(m, 10) + "/" + parseInt(d, 10) + "/" + y;
+      });
+    }
     function prettyWhen(item) {
       if (!item) return "";
       if (item.kind === "once") {
         const due = inferDue(item) || item.dueDate || "";
         const clock = (item.clocks && item.clocks[0]) || "";
-        return [prettyDate(due), clock].filter(Boolean).join(" · ");
+        return prettyText([prettyDate(due), clock].filter(Boolean).join(" · "));
       }
-      return item.when || "";
+      return prettyText(item.when || "");
     }
     function sameDay(a, b) {
       const n = (s) => {
@@ -1669,7 +1674,7 @@
         remindAheadMin: pendingAheadMin || 0,
         aheadAsked: true,
         when: pendingKind === "once"
-          ? [pendingDue || todayStamp(), pendingClocks.join(" · ")].filter(Boolean).join(" · ")
+          ? [prettyDate(pendingDue || todayStamp()), pendingClocks.join(" · ")].filter(Boolean).join(" · ")
           : whenBits.join(" · "),
         action: window._autoStep || "Dopamine is on the other side of done. How good will that feel?",
         doneOn: ""
@@ -1967,7 +1972,7 @@
         const status = f.doneOn === todayStamp() ? "begun" : "waiting";
         row.innerHTML = '<div class="name"></div><div class="meta"></div>';
         row.querySelector(".name").textContent = f.name;
-        row.querySelector(".meta").textContent = (prettyWhen(f) || f.when || "today") + " · " + status;
+        row.querySelector(".meta").textContent = prettyText((prettyWhen(f) || f.when || "today") + " · " + status);
         box.appendChild(row);
       });
     }
@@ -1984,7 +1989,7 @@
         row.innerHTML = '<div class="row-top"><div class="name"></div><div class="row-actions"><button type="button" class="ghost" data-edit>Edit</button><button type="button" class="ghost" data-drop>Remove</button></div></div><div class="meta"></div>';
         row.querySelector(".name").textContent = f.name;
         const kindLabel = ({once:"one time",daily:"daily",weekly:"weekly",monthly:"monthly","as-needed":"as needed"})[f.kind] || f.kind;
-        row.querySelector(".meta").textContent = kindLabel + ((prettyWhen(f) || f.when) ? " · " + (prettyWhen(f) || f.when) : "") + (sameDay(f.pushedOn, todayStamp()) ? " · pushed from yesterday" : "");
+        row.querySelector(".meta").textContent = prettyText(kindLabel + ((prettyWhen(f) || f.when) ? " · " + (prettyWhen(f) || f.when) : "") + (sameDay(f.pushedOn, todayStamp()) ? " · pushed from yesterday" : ""));
         row.querySelector("[data-drop]").addEventListener("click", () => dropItem(f.id));
         row.querySelector("[data-edit]").addEventListener("click", () => editItem(f.id));
         box.appendChild(row);
