@@ -647,7 +647,7 @@
             source: "calendar",
             name: name,
             kind: "once",
-            when: dt && !isNaN(dt.getTime()) ? dt.toLocaleString() : "",
+            when: [due, clock].filter(Boolean).join(" · "),
             start: start,
             dueDate: due,
             clocks: clock ? [clock] : [],
@@ -937,9 +937,9 @@
     function inferDue(item) {
       if (!item) return "";
       if (item.kind === "weekly" || item.kind === "daily") return "";
+      if (item.dueDate && dayNum(item.dueDate)) return item.dueDate;
       const days = weekdaysFrom(item.when);
       if (item.kind === "once" && days.length === 1) return stampForWeekday(WEEKDAYS.indexOf(days[0]));
-      if (item.dueDate && dayNum(item.dueDate)) return item.dueDate;
       return resolveDue(item) || dueFromWhen(item.when) || dueFromWhen(item.name);
     }
     function sameDay(a, b) {
@@ -984,12 +984,6 @@
       return m < 24 * 60 && m < nowMinutes();
     }
     function settleOverdue() {
-      const stamp = todayStamp();
-      waitingPlate().forEach((i) => {
-        if (i.returnedOn === stamp) return;
-        if (!isOverdue(i) || sameDay(i.doneOn, stamp)) return;
-        i.ignoredOn = stamp;
-      });
       persist();
     }
     function daysUntil(due) {
@@ -1647,7 +1641,9 @@
         remindAhead: pendingAhead || 0,
         remindAheadMin: pendingAheadMin || 0,
         aheadAsked: true,
-        when: whenBits.join(" · "),
+        when: pendingKind === "once"
+          ? [pendingDue || todayStamp(), pendingClocks.join(" · ")].filter(Boolean).join(" · ")
+          : whenBits.join(" · "),
         action: window._autoStep || "Dopamine is on the other side of done. How good will that feel?",
         doneOn: ""
       };
@@ -1975,6 +1971,7 @@
       pendingClocks = (f.clocks || []).slice();
       pendingNeeded = f.asNeeded || "";
       pendingRemind = remindList(f);
+      pendingDue = f.dueDate || "";
       document.getElementById("seed-text").value = f.name;
       document.getElementById("kind-echo").textContent = f.name + ".";
       show("place");
@@ -2080,7 +2077,7 @@
           if (!(i.anchors && i.anchors.length)) i.anchors = days;
           return;
         }
-        if (i.kind === "once" && days.length === 1) {
+        if (i.kind === "once" && !i.dueDate && days.length === 1) {
           i.dueDate = stampForWeekday(WEEKDAYS.indexOf(days[0]));
         }
       });
