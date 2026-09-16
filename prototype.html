@@ -1783,11 +1783,18 @@
           return;
         }
       }
+      hidePokeChrome();
       if (window._aheadItem && window._aheadItem.aheadDismiss !== todayStamp()) {
         paintAhead();
-        return;
       }
-      box.classList.remove("on");
+    }
+    function hidePokeChrome() {
+      const poke = document.getElementById("poke");
+      const late = document.getElementById("poke-late");
+      const ahead = document.getElementById("poke-ahead");
+      if (poke) poke.classList.remove("on");
+      if (late) late.style.display = "none";
+      if (ahead) ahead.style.display = "none";
     }
     function pokeHere() {
       if (activePoke) {
@@ -1801,7 +1808,7 @@
         assignedId = activePoke.item.id;
         persist();
       }
-      document.getElementById("poke").classList.remove("on");
+      hidePokeChrome();
       show("start");
     }
     function ignoreToday() {
@@ -1818,7 +1825,8 @@
         s[activePoke.key] = Date.now();
         savePokes(s);
       }
-      document.getElementById("poke").classList.remove("on");
+      hidePokeChrome();
+      activePoke = null;
       assignFromPlate();
       pruneSpentOnce();
     settleOverdue();
@@ -1947,7 +1955,14 @@
       show("results");
     }
     function markDone() {
-      const f = assigned();
+      const f = (activePoke && activePoke.item) || assigned();
+      if (activePoke) {
+        const s = pokeState();
+        s[activePoke.key] = Date.now();
+        savePokes(s);
+        activePoke = null;
+      }
+      hidePokeChrome();
       if (!f) return show("start");
       markDoneId(f.id);
     }
