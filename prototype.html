@@ -755,16 +755,7 @@
       if (!importDraft.length) return show("disciplined");
       const row = importDraft.shift();
       row.dueDate = resolveDue(row) || row.dueDate || "";
-      if (isFutureItem(row)) {
-        window._importHold = row;
-        pendingKind = row.kind || "once";
-        pendingDue = row.dueDate || "";
-        pendingClocks = row.clocks || [];
-        pendingRemind = ["app"];
-        draft = row.name;
-        openAheadAsk(row.dueDate);
-        return;
-      }
+      row.kind = row.kind || "once";
       row.aheadAsked = true;
       fileImportRow(row);
       if (!importDraft.length) show("disciplined");
@@ -1145,21 +1136,18 @@
       return isFutureDue(row && row.kind, due, row && row.clocks);
     }
     function askMissingAhead() {
-      if (window._importHold) return;
-      const hit = items.find((i) => !i.doneOn && !i.aheadAsked && isFutureItem(i));
-      if (!hit) return;
-      window._importHold = hit;
-      pendingKind = hit.kind || "once";
-      pendingDue = resolveDue(hit);
-      pendingClocks = hit.clocks || [];
-      draft = hit.name;
-      openAheadAsk(pendingDue);
+      items.forEach((i) => {
+        if (isFutureItem(i)) i.aheadAsked = true;
+      });
+      persist();
+      knockAhead();
     }
     function openAheadAsk(due) {
       const ask = document.getElementById("ahead-ask");
       if (ask) ask.textContent = due ? "When should I knock before " + due + "?" : "When should I knock before this?";
       const box = document.getElementById("ahead-amounts");
       if (box) { box.style.display = "none"; box.innerHTML = ""; }
+      window._skipResetPlace = true;
       document.querySelectorAll("#place .step").forEach((s) => s.classList.remove("on"));
       document.getElementById("s-ahead").classList.add("on");
       show("place");
@@ -1334,7 +1322,8 @@
       if (id === "results") drawResults();
       if (id === "settings") drawSettings();
       if (id === "agent") drawAgent();
-      if (id === "place" && !editingId) resetPlace();
+      if (id === "place" && !editingId && !window._skipResetPlace) resetPlace();
+      window._skipResetPlace = false;
       updateBadge();
     }
     function closeAgent() { show(window._agentBack || "start"); }
