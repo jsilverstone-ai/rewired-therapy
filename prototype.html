@@ -491,7 +491,7 @@
         const res = await fetch("https://api.x.ai/v1/chat/completions", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
-          body: JSON.stringify({ model: "grok-2-latest", messages: messages, temperature: 0.2 })
+          body: JSON.stringify({ model: "grok-2-latest", messages: messages, temperature: (window._askTemp || 0.2) })
         });
         if (!res.ok) throw new Error("xai " + res.status);
         const data = await res.json();
@@ -503,7 +503,7 @@
         const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + key },
-          body: JSON.stringify({ model: model, messages: messages, temperature: 0.2 })
+          body: JSON.stringify({ model: model, messages: messages, temperature: (window._askTemp || 0.2) })
         });
         if (res.ok) {
           const data = await res.json();
@@ -1382,7 +1382,7 @@
       if (!rows.length) {
         const d = document.createElement("div");
         d.className = "msg bot";
-        d.textContent = "I’m at your service. Consider me your personal brain agent.";
+        d.textContent = agentHello();
         log.appendChild(d);
       }
       rows.forEach((r) => {
@@ -1393,10 +1393,40 @@
       });
       log.scrollTop = log.scrollHeight;
     }
-    function agentContext() {
-      const names = items.map((i) => i.name + (i.when ? " (" + i.when + ")" : "")).slice(0, 20).join("; ");
+    function agentHello() {
       const now = assigned();
-      return "Caretaker for Rewired Therapy. The human is the Tamagotchi; you check in. Short sentences. Do not ask for medical records, charts, or diagnoses. Do not invent tasks unless they ask. If they want a task added, end with exactly one line: TASK: the name. Today on the pile: " + (names || "empty") + ". Begin now: " + (now ? now.name : "nothing") + ".";
+      const plate = typeof waitingPlate === "function" ? waitingPlate() : [];
+      if (now) return "Hey. I’m here. We can talk about " + now.name + ", or we can talk about anything else.";
+      if (plate.length) return "Hey. I’m here. The day has a few things on it, but you don’t have to start there.";
+      return "Hey. I’m here. What’s going on?";
+    }
+    function agentContext() {
+      const stamp = todayStamp();
+      const weekday = WEEKDAYS[new Date().getDay()];
+      const now = assigned();
+      const plate = (typeof waitingPlate === "function" ? waitingPlate() : []).map((i) => i.name + " · " + (prettyWhen(i) || i.when || "today"));
+      const later = items.filter((i) => i.kind === "once" && inferDue(i) && dayNum(inferDue(i)) > dayNum(stamp)).slice(0, 8).map((i) => i.name + " · " + prettyWhen(i));
+      const habits = items.filter((i) => i.kind === "weekly" || i.kind === "daily").slice(0, 12).map((i) => i.name + " · " + (i.when || i.kind));
+      const done = items.filter((i) => sameDay(i.doneOn, stamp)).map((i) => i.name);
+      const parked = items.filter((i) => sameDay(i.ignoredOn, stamp)).map((i) => i.name);
+      const recent = (train || []).slice(-8).map((e) => e.name + " → " + e.outcome).join("; ");
+      return [
+        "You are My Agent. First you are a casual buddy. Second you know their day. The human is the Tamagotchi; you check in like a friend who also happens to know the list.",
+        "Talk like someone they already know. Warm, a little dry humor is fine. Chat about anything: food, family, faith, work, boredom, a joke, nothing in particular.",
+        "Do not steer every reply back to tasks. If they want to wander, wander with them. If they sound tired, sit with that. If they ask about the day, then use the lists.",
+        "When the day is relevant, be specific. Quote item names exactly. One next physical move only if they want help moving.",
+        "Never ask for medical records, charts, diagnoses, or medication lists. You are not a clinician.",
+        "Do not invent tasks. Only if they clearly want something added, end with one line: TASK: short name",
+        "Two to six short sentences. No pep-talk script. No stacked questions.",
+        "Clock: " + weekday + " " + stamp + ".",
+        "Begin right now: " + (now ? now.name + " · " + (prettyWhen(now) || now.when || "") : "nothing assigned") + ".",
+        "On the plate today: " + (plate.join("; ") || "empty") + ".",
+        "Coming later: " + (later.join("; ") || "none listed") + ".",
+        "Habits they live by: " + (habits.join("; ") || "none") + ".",
+        "Already done today: " + (done.join("; ") || "none") + ".",
+        "Parked or ignored today: " + (parked.join("; ") || "none") + ".",
+        "Recent outcomes: " + (recent || "none") + "."
+      ].join(" ");
     }
     async function sendAgent() {
       const box = document.getElementById("agent-text");
@@ -1409,7 +1439,15 @@
       drawAgent();
       const offer = document.getElementById("agent-offer");
       if (offer) { offer.style.display = "none"; offer.innerHTML = ""; }
-      const reply = await askKeeper(text, agentContext());
+      const history = rows.slice(-8).map((r) => (r.role === "user" ? "Human: " : "Agent: ") + r.text).join("\n");
+      window._askTemp = 0.7;
+      let reply = "";
+      try {
+        reply = await askKeeper("Conversation:\n" + history + "\n\nReply to the latest Human line like a friend. Stay with what they said. Only bring up the list if they went there.", agentContext());
+      } catch (e) {
+        reply = "I lost the cloud for a second. Say that again and I’ll stay with you.";
+      }
+      window._askTemp = 0.2;
       const clean = String(reply || "I’m here.").replace(/TASK:\s*(.+)$/im, (m, name) => {
         paintAgentOffer(name.trim());
         return "";
