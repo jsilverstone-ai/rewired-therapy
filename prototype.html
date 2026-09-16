@@ -693,13 +693,7 @@
         const ap = /p/i.test(tm[3]) ? "PM" : "AM";
         out.clocks = [parseInt(tm[1], 10) + ":" + tm[2] + " " + ap];
       }
-      const dt = raw.match(/\b((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:,?\s+\d{4})?|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)/i);
-      if (dt) {
-        const d = new Date(dt[1]);
-        if (!isNaN(d.getTime()) && d.getFullYear() >= 2020) {
-          out.dueDate = d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
-        }
-      }
+      out.dueDate = parseLooseDate(raw);
       if (!out.dueDate) {
         const sent = raw.match(/\b(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s+\d{1,2}\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{4}/i);
         if (sent) {
@@ -899,8 +893,8 @@
     checkPokes();
     setInterval(checkPokes, 20000);
     }
-    function dueFromWhen(when) {
-      const raw = String(when || "").replace(/·/g, " ");
+    function parseLooseDate(text) {
+      const raw = String(text || "").replace(/·/g, " ");
       if (!raw.trim()) return "";
       const iso = raw.match(/\b(20\d{2})-(\d{1,2})-(\d{1,2})\b/);
       if (iso) return stampFromParts(parseInt(iso[1],10), parseInt(iso[2],10), parseInt(iso[3],10));
@@ -910,13 +904,24 @@
         if (y < 100) y += 2000;
         return stampFromParts(y, parseInt(slash[1], 10), parseInt(slash[2], 10));
       }
-      const long = raw.match(/\b((?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+\d{1,2}(?:,?\s+\d{4})?)/i);
-      if (long) {
-        const d = new Date(long[1]);
-        if (!isNaN(d.getTime()) && d.getFullYear() >= 2020) {
-          return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate());
-        }
+      const mon = raw.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|sept|oct|nov|dec)\.?\s+(\d{1,2})(?:st|nd|rd|th)?(?:,?\s*(20\d{2}))?/i);
+      if (mon) {
+        const map = {january:1,february:2,march:3,april:4,may:5,june:6,july:7,august:8,september:9,october:10,november:11,december:12,jan:1,feb:2,mar:3,apr:4,jun:6,jul:7,aug:8,sep:9,sept:9,oct:10,nov:11,dec:12};
+        const month = map[String(mon[1]).toLowerCase()];
+        const day = parseInt(mon[2], 10);
+        let year = mon[3] ? parseInt(mon[3], 10) : new Date().getFullYear();
+        if (!month || !day) return "";
+        let stamp = stampFromParts(year, month, day);
+        if (!mon[3] && dayNum(stamp) < dayNum(todayStamp())) stamp = stampFromParts(year + 1, month, day);
+        return stamp;
       }
+      return "";
+    }
+    function dueFromWhen(when) {
+      const raw = String(when || "").replace(/·/g, " ");
+      const dated = parseLooseDate(raw);
+      if (dated) return dated;
+      if (weekdaysFrom(raw).length > 1) return "";
       const named = namedWeekday(raw);
       if (named != null) return stampForWeekday(named);
       return "";
@@ -937,10 +942,12 @@
     function inferDue(item) {
       if (!item) return "";
       if (item.kind === "weekly" || item.kind === "daily") return "";
+      const fromText = parseLooseDate([item.name, item.when, item.dueDate].filter(Boolean).join(" "));
+      if (fromText) return fromText;
       if (item.dueDate && dayNum(item.dueDate)) return item.dueDate;
       const days = weekdaysFrom(item.when);
       if (item.kind === "once" && days.length === 1) return stampForWeekday(WEEKDAYS.indexOf(days[0]));
-      return resolveDue(item) || dueFromWhen(item.when) || dueFromWhen(item.name);
+      return resolveDue(item) || dueFromWhen(item.when);
     }
     function sameDay(a, b) {
       const n = (s) => {
@@ -1719,6 +1726,8 @@
       const list = chronoPlate();
       activePoke = null;
       for (const item of list) {
+        const due = inferDue(item);
+        if (due && !sameDay(due, todayStamp()) && item.kind === "once") continue;
         const t = itemMinutes(item);
         if (t >= 24 * 60) continue;
         const k30 = pokeKey(item, "30");
@@ -2077,8 +2086,10 @@
           if (!(i.anchors && i.anchors.length)) i.anchors = days;
           return;
         }
-        if (i.kind === "once" && !i.dueDate && days.length === 1) {
-          i.dueDate = stampForWeekday(WEEKDAYS.indexOf(days[0]));
+        if (i.kind === "once") {
+          const parsed = parseLooseDate([i.name, i.when, i.dueDate].filter(Boolean).join(" "));
+          if (parsed) i.dueDate = parsed;
+          else if (!i.dueDate && days.length === 1) i.dueDate = stampForWeekday(WEEKDAYS.indexOf(days[0]));
         }
       });
       persist();
