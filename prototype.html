@@ -185,6 +185,26 @@
     }
     .topbar .kicker { margin-bottom: 0; }
     .topbar .lede { margin-top: 0; font-size: 13px; }
+    .flow-break {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 22px 0 10px;
+    }
+    .flow-break:first-child { margin-top: 4px; }
+    .flow-break span {
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+    }
+    .flow-break b {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--quiet);
+      white-space: nowrap;
+    }
 
     .chrome {
       display: flex;
@@ -868,20 +888,7 @@
       persist();
     }
     async function assignWithAI() {
-      const plate = plateItems().filter((i) => i.doneOn !== todayStamp());
-      if (!plate.length) { assignedId = null; persist(); return; }
-      const recent = train.slice(-12).map((e) => e.name + " → " + e.outcome).join("; ");
-      const list = plate.map((i) => i.id + " | " + i.name + " | " + (i.when || "")).join("\n");
-      try {
-        const raw = (await askKeeper(
-          "Pick ONE item for Where I start. Reply with that item id only, nothing else.\nNow: " + new Date().toString() + "\nRecent outcomes: " + (recent || "none") + "\nItems:\n" + list
-        )) || "";
-        const hit = plate.find((i) => raw.includes(i.id) || raw.toLowerCase().includes((i.name || "").toLowerCase()));
-        assignedId = hit ? hit.id : plate[0].id;
-      } catch (e) {
-        assignedId = plate[0].id;
-      }
-      persist();
+      assignFromPlate();
       const cur = assigned();
       if (cur) writeFirstStep(cur);
       pruneSpentOnce();
@@ -984,23 +991,43 @@
     }
     function parseClock(label) {
       const s = String(label || "");
-      const m = s.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      const m = s.match(/\b(\d{1,2}):(\d{2})\s*(a\.?m\.?|p\.?m\.?|AM|PM)\b/i);
       if (!m) return null;
       let h = parseInt(m[1], 10);
       const min = parseInt(m[2], 10);
-      const ap = m[3].toUpperCase();
+      const ap = /p/i.test(m[3]) ? "PM" : "AM";
       if (ap === "PM" && h < 12) h += 12;
       if (ap === "AM" && h === 12) h = 0;
       return h * 60 + min;
+    }
+    function extractClock(text) {
+      const s = String(text || "");
+      const m = s.match(/\b(\d{1,2}):(\d{2})\s*(a\.?m\.?|p\.?m\.?|AM|PM)\b/i);
+      if (!m) return "";
+      const ap = /p/i.test(m[3]) ? "PM" : "AM";
+      return parseInt(m[1], 10) + ":" + m[2] + " " + ap;
+    }
+    function itemClock(item) {
+      if (!item) return "";
+      return extractClock(item.name) || extractClock(item.when) || extractClock((item.clocks && item.clocks[0]) || "") || "";
+    }
+    function plateWhen(item) {
+      const clock = itemClock(item);
+      if (item && item.kind === "once") {
+        const due = inferDue(item);
+        const dateBit = due && !sameDay(due, todayStamp()) ? prettyDate(due) : "";
+        return [dateBit, clock].filter(Boolean).join(" · ") || "today";
+      }
+      return clock || "";
     }
     function isOnceRow(item) { return !item || item.kind === "once" || item.once === true; }
     function flowHead(box, item, last) {
       const once = isOnceRow(item);
       if (last === once) return once;
-      const cap = document.createElement("p");
-      cap.className = "kicker";
-      cap.textContent = once ? "One time" : "All the time";
-      cap.style.margin = last === null ? "4px 0 8px" : "22px 0 8px";
+      const cap = document.createElement("div");
+      cap.className = "flow-break";
+      cap.innerHTML = "<span></span><b></b><span></span>";
+      cap.querySelector("b").textContent = once ? "One time" : "All the time";
       box.appendChild(cap);
       return once;
     }
@@ -1020,6 +1047,9 @@
       }).map((row) => row.item);
     }
     function itemMinutes(item) {
+      const labeled = itemClock(item);
+      const fromLabel = parseClock(labeled);
+      if (fromLabel !== null) return fromLabel;
       const clocks = item.clocks || (item.clock ? [item.clock] : []);
       const nums = clocks.map(parseClock).filter((n) => n !== null);
       if (nums.length) return Math.min.apply(null, nums);
@@ -1939,8 +1969,12 @@
       const line = chronoPlate();
       const idx = line.findIndex((x) => x.id === f.id);
       const upcoming = line[idx + 1];
-      const clock = (f.clocks && f.clocks[0]) || (parseClock(f.when) !== null ? (String(f.when).match(/(\d{1,2}:\d{2}\s*(AM|PM))/i) || [""])[0] : "");
-      document.getElementById("start-title").textContent = f.name + (clock ? " · " + clock : ".");
+      const clock = itemClock(f);
+      const rawName = String(f.name || "").replace(/\s*[·•]\s*$/, "");
+      const titled = clock && rawName.toUpperCase().indexOf(clock.toUpperCase()) >= 0
+        ? rawName
+        : (rawName + (clock ? " · " + clock : "."));
+      document.getElementById("start-title").textContent = titled;
       document.getElementById("start-lede").textContent = upcoming ? ("After this: " + upcoming.name) : "Let’s do it.";
       document.getElementById("start-act").textContent = f.action || "";
       paintAhead();
@@ -2052,7 +2086,7 @@
         const status = f.doneOn === todayStamp() ? "begun" : "waiting";
         row.innerHTML = '<div class="name"></div><div class="meta"></div>';
         row.querySelector(".name").textContent = f.name;
-        row.querySelector(".meta").textContent = prettyText((prettyWhen(f) || f.when || "today") + " · " + status);
+        row.querySelector(".meta").textContent = prettyText((plateWhen(f) || "today") + " · " + status);
         box.appendChild(row);
       });
     }
