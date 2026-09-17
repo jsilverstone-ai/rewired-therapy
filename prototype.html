@@ -186,24 +186,22 @@
     .topbar .kicker { margin-bottom: 0; }
     .topbar .lede { margin-top: 0; font-size: 13px; }
     .flow-break {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin: 22px 0 10px;
+      display: block;
+      text-align: center;
+      margin: 24px 0 14px;
+      padding: 10px 0;
+      border-top: 2px solid var(--bell);
+      border-bottom: 2px solid var(--bell);
     }
-    .flow-break:first-child { margin-top: 4px; }
-    .flow-break span {
-      flex: 1;
-      height: 1px;
-      background: var(--line);
-    }
+    .flow-break:first-child { margin-top: 8px; }
+    .flow-break span { display: none; }
     .flow-break b {
+      display: block;
       font-size: 11px;
-      letter-spacing: 0.14em;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       font-weight: 600;
-      color: var(--quiet);
-      white-space: nowrap;
+      color: var(--ink);
     }
 
     .chrome {
