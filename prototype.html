@@ -993,6 +993,32 @@
       if (ap === "AM" && h === 12) h = 0;
       return h * 60 + min;
     }
+    function isOnceRow(item) { return !item || item.kind === "once" || item.once === true; }
+    function flowHead(box, item, last) {
+      const once = isOnceRow(item);
+      if (last === once) return once;
+      const cap = document.createElement("p");
+      cap.className = "kicker";
+      cap.textContent = once ? "One time" : "All the time";
+      cap.style.margin = last === null ? "4px 0 8px" : "22px 0 8px";
+      box.appendChild(cap);
+      return once;
+    }
+    function sortByFlow(list) {
+      return (list || []).map((item, idx) => ({ item: item, idx: idx })).sort((a, b) => {
+        const ao = (a.item.kind === "once" || a.item.once) ? 0 : 1;
+        const bo = (b.item.kind === "once" || b.item.once) ? 0 : 1;
+        if (ao !== bo) return ao - bo;
+        if (ao === 0) {
+          const da = dayNum(inferDue(a.item) || a.item.dueDate || "") || 0;
+          const db = dayNum(inferDue(b.item) || b.item.dueDate || "") || 0;
+          if (da !== db) return da - db;
+        }
+        const ta = itemMinutes(a.item) - itemMinutes(b.item);
+        if (ta) return ta;
+        return a.idx - b.idx;
+      }).map((row) => row.item);
+    }
     function itemMinutes(item) {
       const clocks = item.clocks || (item.clock ? [item.clock] : []);
       const nums = clocks.map(parseClock).filter((n) => n !== null);
@@ -2014,12 +2040,13 @@
       plateItems().filter((i) => sameDay(i.doneOn, todayStamp())).forEach((i) => {
         if (!rows.some((x) => x.id === i.id)) rows.push(i);
       });
+      const lined = rows.slice().sort((a, b) => itemMinutes(a) - itemMinutes(b) || String(a.name || "").localeCompare(String(b.name || "")));
       box.innerHTML = "";
-      if (!rows.length) {
+      if (!lined.length) {
         box.innerHTML = '<p class="lede">Nothing on the plate yet. Pile something on, and it will show up here.</p>';
         return;
       }
-      rows.forEach((f) => {
+      lined.forEach((f) => {
         const row = document.createElement("div");
         row.className = "row";
         const status = f.doneOn === todayStamp() ? "begun" : "waiting";
@@ -2036,7 +2063,9 @@
         box.innerHTML = '<p class="lede">Discipline beats motivation. Pile it on here.</p>';
         return;
       }
-      items.filter((f) => !(f.kind === "once" && f.doneOn && !sameDay(f.doneOn, todayStamp()))).forEach((f) => {
+      let pileTone = null;
+      sortByFlow(items.filter((f) => !(f.kind === "once" && f.doneOn && !sameDay(f.doneOn, todayStamp())))).forEach((f) => {
+        pileTone = flowHead(box, f, pileTone);
         const row = document.createElement("div");
         row.className = "row";
         row.innerHTML = '<div class="row-top"><div class="name"></div><div class="row-actions"><button type="button" class="ghost" data-edit>Edit</button><button type="button" class="ghost" data-drop>Remove</button></div></div><div class="meta"></div>';
@@ -2095,8 +2124,9 @@
         const onPlate = onPlateToday(f) && !ignored && !done;
         if (!onPlate && !done && !ignored) return;
         seen.add(key);
-        rows.push({ id: f.id, name: f.name, done: done, ignored: ignored });
+        rows.push({ id: f.id, name: f.name, done: done, ignored: ignored, kind: f.kind, dueDate: f.dueDate, when: f.when, clocks: f.clocks, anchors: f.anchors });
       });
+      const linedResults = sortByFlow(rows);
       const doneN = rows.filter((e) => e.done).length;
       const allN = rows.length;
       const lab = document.getElementById("meter-label");
@@ -2104,11 +2134,12 @@
       if (lab) lab.textContent = allN ? (doneN + " of " + allN + " off the plate today. Whoop whoop 🙌") : "Nothing off the plate yet.";
       if (fill) fill.style.width = (allN ? Math.round(doneN / allN * 100) : 0) + "%";
       box.innerHTML = "";
-      if (!rows.length) {
+      if (!linedResults.length) {
         box.innerHTML = '<p class="lede">Nothing to celebrate yet. Begin one assigned thing.</p>';
         return;
       }
-      rows.forEach((e) => {
+      const timedResults = linedResults.slice().sort((a, b) => itemMinutes(a) - itemMinutes(b) || String(a.name).localeCompare(String(b.name)));
+      timedResults.forEach((e) => {
         const row = document.createElement("div");
         row.className = "row" + (e.done ? " strike" : "");
         row.innerHTML = '<div class="row-top"><div class="name"></div></div><div class="meta"></div>';
