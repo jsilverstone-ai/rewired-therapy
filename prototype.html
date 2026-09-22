@@ -2038,9 +2038,10 @@
       const titled = clock && rawName.toUpperCase().indexOf(clock.toUpperCase()) >= 0
         ? rawName
         : (rawName + (clock ? " · " + clock : "."));
-      document.getElementById("start-title").textContent = titled;
+      fillMeta(document.getElementById("start-title"), titled, f);
       const lede = document.getElementById("start-lede");
-      fillMeta(lede, upcoming ? ("After this: " + upcoming.name) : (itemClock(f) || "Let’s do it."), f);
+      if (upcoming) fillMeta(lede, "After this: " + upcoming.name, upcoming);
+      else lede.textContent = "Let’s do it.";
       document.getElementById("start-act").textContent = f.action || "";
       paintAhead();
     }
