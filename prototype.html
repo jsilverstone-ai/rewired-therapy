@@ -131,7 +131,9 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
       line-height: 16px;
+      vertical-align: middle;
     }
+    .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
     .row .name { font-family: var(--serif); font-size: 20px; }
     .row .meta { color: var(--quiet); font-size: 14px; margin-top: 4px; }
     input[type="text"], input[type="password"], input#api-key {
@@ -368,7 +370,7 @@
         <p class="lede" id="must-ask">What kind of date is that?</p>
         <div class="choices">
           <button type="button" class="ghost" onclick="setMust(false)">Do it that day</button>
-          <button type="button" class="ghost" onclick="setMust(true)">Hard deadline. Last day it can wait.</button>
+          <button type="button" class="ghost" onclick="setMust(true)">Hard deadline — must be done today</button>
         </div>
       </div>
       <div class="step" id="s-how">
@@ -1053,6 +1055,17 @@
       if (item && item.mustDo && !item.doneOn) return "must";
       return "";
     }
+    function fillMeta(node, text, item) {
+      if (!node) return;
+      node.textContent = "";
+      node.appendChild(document.createTextNode(text || ""));
+      const mark = urgencyMark(item);
+      if (!mark) return;
+      const tag = document.createElement("span");
+      tag.className = "urg";
+      tag.textContent = mark;
+      node.appendChild(tag);
+    }
     function isOnceRow(item) { return !item || item.kind === "once" || item.once === true; }
     function flowHead(box, item, last) {
       const once = isOnceRow(item);
@@ -1225,8 +1238,8 @@
       if (pendingRemind.includes("phone") && "Notification" in window && Notification.permission === "default") {
         Notification.requestPermission();
       }
-      if (isFutureDue(pendingKind, pendingDue, pendingClocks)) {
-        openAheadAsk(pendingDue);
+      if (pendingKind === "monthly" || pendingKind === "weekly" || pendingKind === "daily" || pendingMust || isFutureDue(pendingKind, pendingDue, pendingClocks)) {
+        openAheadAsk(pendingKind === "monthly" ? "the next date" : pendingDue);
         return;
       }
       finishPlace();
@@ -2024,7 +2037,8 @@
         ? rawName
         : (rawName + (clock ? " · " + clock : "."));
       document.getElementById("start-title").textContent = titled;
-      document.getElementById("start-lede").textContent = upcoming ? ("After this: " + upcoming.name) : "Let’s do it.";
+      const lede = document.getElementById("start-lede");
+      fillMeta(lede, upcoming ? ("After this: " + upcoming.name) : (itemClock(f) || "Let’s do it."), f);
       document.getElementById("start-act").textContent = f.action || "";
       paintAhead();
     }
@@ -2135,7 +2149,7 @@
         const status = f.doneOn === todayStamp() ? "begun" : "waiting";
         row.innerHTML = '<div class="name"></div><div class="meta"></div>';
         row.querySelector(".name").textContent = f.name;
-        row.querySelector(".meta").textContent = prettyText((plateWhen(f) || "today") + " · " + status);
+        fillMeta(row.querySelector(".meta"), prettyText((plateWhen(f) || "today") + " · " + status), f);
         box.appendChild(row);
       });
     }
@@ -2151,17 +2165,10 @@
         pileTone = flowHead(box, f, pileTone);
         const row = document.createElement("div");
         row.className = "row";
-        row.innerHTML = '<div class="row-top"><div class="name-line"><div class="name"></div></div><div class="row-actions"><button type="button" class="ghost" data-edit>Edit</button><button type="button" class="ghost" data-drop>Remove</button></div></div><div class="meta"></div>';
+        row.innerHTML = '<div class="row-top"><div class="name"></div><div class="row-actions"><button type="button" class="ghost" data-edit>Edit</button><button type="button" class="ghost" data-drop>Remove</button></div></div><div class="meta"></div>';
         row.querySelector(".name").textContent = f.name;
-        const mark = urgencyMark(f);
-        if (mark) {
-          const tag = document.createElement("span");
-          tag.className = "urg";
-          tag.textContent = mark;
-          row.querySelector(".name-line").appendChild(tag);
-        }
         const kindLabel = f.mustDo ? "must do" : (({once:"one time",daily:"daily",weekly:"weekly",monthly:"monthly","as-needed":"as needed"})[f.kind] || f.kind);
-        row.querySelector(".meta").textContent = prettyText(kindLabel + ((prettyWhen(f) || f.when) ? " · " + (prettyWhen(f) || f.when) : "") + (sameDay(f.pushedOn, todayStamp()) ? " · pushed from yesterday" : ""));
+        fillMeta(row.querySelector(".meta"), prettyText(kindLabel + ((prettyWhen(f) || f.when) ? " · " + (prettyWhen(f) || f.when) : "") + (sameDay(f.pushedOn, todayStamp()) ? " · pushed from yesterday" : "")), f);
         row.querySelector("[data-drop]").addEventListener("click", () => dropItem(f.id));
         row.querySelector("[data-edit]").addEventListener("click", () => editItem(f.id));
         box.appendChild(row);
@@ -2215,7 +2222,7 @@
         const onPlate = onPlateToday(f) && !ignored && !done;
         if (!onPlate && !done && !ignored) return;
         seen.add(key);
-        rows.push({ id: f.id, name: f.name, done: done, ignored: ignored, kind: f.kind, dueDate: f.dueDate, when: f.when, clocks: f.clocks, anchors: f.anchors });
+        rows.push({ id: f.id, name: f.name, done: done, ignored: ignored, kind: f.kind, dueDate: f.dueDate, when: f.when, clocks: f.clocks, anchors: f.anchors, mustDo: f.mustDo, deadline: f.deadline, ignoredOn: f.ignoredOn, doneOn: f.doneOn });
       });
       const linedResults = sortByFlow(rows);
       const doneN = rows.filter((e) => e.done).length;
@@ -2235,7 +2242,7 @@
         row.className = "row" + (e.done ? " strike" : "");
         row.innerHTML = '<div class="row-top"><div class="name"></div></div><div class="meta"></div>';
         row.querySelector(".name").textContent = e.name;
-        row.querySelector(".meta").textContent = e.done ? "Done" : (e.ignored ? "Ignored today" : "On the plate");
+        fillMeta(row.querySelector(".meta"), e.done ? "Done" : (e.ignored ? "Ignored today" : "On the plate"), e);
         const b = document.createElement("button");
         b.type = "button";
         b.className = "ghost undo";
