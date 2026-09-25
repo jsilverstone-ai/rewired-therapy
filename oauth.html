@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Return to Rewired Therapy</title>
+</head>
+<body style="font-family:sans-serif;padding:32px;background:#F3F0EA;color:#2F3E4E">
+  <p>Returning to Rewired Therapy…</p>
+  <p><a id="go" href="#">Open the app</a></p>
+  <script>
+    const bit = location.hash || location.search || "";
+    const deep = "com.rewiredtherapy.app://oauth" + (bit.charAt(0) === "#" || bit.charAt(0) === "?" ? bit : "");
+    const a = document.getElementById("go");
+    a.href = deep;
+    location.replace(deep);
+  </script>
+</body>
+</html>
